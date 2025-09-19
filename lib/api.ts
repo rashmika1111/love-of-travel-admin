@@ -39,6 +39,7 @@ const mockPosts: Post[] = [
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15'),
     publishedAt: new Date('2024-01-15'),
+    jsonLd: false,
   },
   {
     id: '2',
@@ -51,6 +52,7 @@ const mockPosts: Post[] = [
     author: 'Jane Smith',
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-01-20'),
+    jsonLd: false,
   },
   {
     id: '3',
@@ -63,6 +65,7 @@ const mockPosts: Post[] = [
     author: 'Mike Johnson',
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-01-25'),
+    jsonLd: false,
   },
 ];
 
@@ -141,8 +144,8 @@ export async function getPosts(searchParams: PostSearch): Promise<{ rows: Post[]
   }
   
   if (searchParams.author) {
-    filteredPosts = filteredPosts.filter(post => 
-      post.author.toLowerCase().includes(searchParams.author.toLowerCase())
+    filteredPosts = filteredPosts.filter(post =>
+      post.author.toLowerCase().includes(searchParams.author!.toLowerCase())
     );
   }
   
@@ -178,11 +181,17 @@ export async function updatePost(id: string, data: Partial<PostPublish>): Promis
   const existing = posts.get(id);
   if (!existing) return null;
   
+  console.log('updatePost - data received:', data);
+  console.log('updatePost - featuredImage:', data.featuredImage);
+  
   const updated: Post = {
     ...existing,
     ...data,
     updatedAt: new Date(),
   };
+  
+  console.log('updatePost - updated post:', updated);
+  console.log('updatePost - updated featuredImage:', updated.featuredImage);
   
   posts.set(id, updated);
   await savePosts(posts);
@@ -249,6 +258,8 @@ export async function getMediaAssets(): Promise<MediaAsset[]> {
 
 export async function uploadMedia(file: File): Promise<{ id: string; url: string }> {
   await ensureInitialized();
+  console.log('uploadMedia - starting upload for file:', file.name);
+  
   // Mock implementation - in real app, upload to storage service
   const id = Math.random().toString(36).substr(2, 9);
   
@@ -261,6 +272,9 @@ export async function uploadMedia(file: File): Promise<{ id: string; url: string
     reader.readAsDataURL(file);
   });
   
+  console.log('uploadMedia - data URL created, length:', url.length);
+  console.log('uploadMedia - data URL preview:', url.substring(0, 100) + '...');
+  
   const asset: MediaAsset = {
     id,
     url,
@@ -270,8 +284,14 @@ export async function uploadMedia(file: File): Promise<{ id: string; url: string
     uploadedAt: new Date(),
   };
   
+  console.log('uploadMedia - asset created:', asset);
+  
   mediaAssets.set(id, asset);
+  console.log('uploadMedia - asset added to map, total assets:', mediaAssets.size);
+  
   await saveMediaAssets(mediaAssets);
+  console.log('uploadMedia - assets saved to file');
+  
   return { id, url };
 }
 

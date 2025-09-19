@@ -21,7 +21,21 @@ import { Post } from '@/lib/api';
 import { MediaLibrary } from '@/components/cms/MediaLibrary';
 import { MediaAsset } from '@/lib/api';
 
-type PostFormData = z.infer<typeof PostDraftSchema>;
+// Form schema that matches the form requirements
+const EditPostFormSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
+  slug: z.string().min(1, 'Slug is required').max(100, 'Slug must be less than 100 characters'),
+  body: z.string().optional(),
+  tags: z.array(z.string()),
+  categories: z.array(z.string()),
+  featuredImage: z.string().optional(),
+  seoTitle: z.string().max(60, 'SEO title must be less than 60 characters').optional(),
+  metaDescription: z.string().max(160, 'Meta description must be less than 160 characters').optional(),
+  jsonLd: z.boolean(),
+  status: z.enum(['draft', 'review', 'published']).optional(),
+});
+
+type PostFormData = z.infer<typeof EditPostFormSchema>;
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -43,7 +57,7 @@ export default function EditPostPage() {
     watch,
     formState: { errors },
   } = useForm<PostFormData>({
-    resolver: zodResolver(PostDraftSchema),
+    resolver: zodResolver(EditPostFormSchema),
     defaultValues: {
       title: '',
       slug: '',
@@ -81,12 +95,16 @@ export default function EditPostPage() {
           
           // Set featured image if exists
           if (postData.featuredImage) {
+            // Create a proper MediaAsset object for existing featured image
+            const isDataUrl = postData.featuredImage.startsWith('data:');
+            const filename = isDataUrl ? 'Featured Image' : postData.featuredImage.split('/').pop() || 'Featured Image';
+            
             setSelectedImage({
-              id: 'existing',
+              id: 'existing-' + postId,
               url: postData.featuredImage,
               type: 'image',
-              sizeKB: 0,
-              filename: 'Featured Image',
+              sizeKB: isDataUrl ? Math.round(postData.featuredImage.length / 1024) : 0, // Estimate size for data URLs
+              filename: filename,
               uploadedAt: new Date(),
             });
           }
@@ -113,6 +131,9 @@ export default function EditPostPage() {
       return;
     }
 
+    console.log('Form data being sent:', data);
+    console.log('Featured image URL:', data.featuredImage);
+
     setSaving(true);
     try {
       const response = await fetch(`/api/admin/posts/${postId}`, {
@@ -124,7 +145,11 @@ export default function EditPostPage() {
       });
 
       if (response.ok) {
-        router.push('/layout-1/blog/posts');
+        // Add a small delay to ensure the update is processed
+        setTimeout(() => {
+          // Add timestamp to force refresh
+          window.location.href = `/layout-1/blog/posts?refresh=${Date.now()}`;
+        }, 100);
       } else {
         const errorData = await response.json();
         console.error('Error updating post:', errorData.error);
@@ -261,7 +286,7 @@ export default function EditPostPage() {
                   <Label htmlFor="status">Status</Label>
                   <Select 
                     defaultValue={post.status} 
-                    onValueChange={(value) => setValue('status', value)}
+                    onValueChange={(value) => setValue('status', value as 'draft' | 'review' | 'published')}
                     disabled={!canPublish}
                   >
                     <SelectTrigger className="w-32">
@@ -427,7 +452,10 @@ export default function EditPostPage() {
                     <div className="space-y-2">
                       <p className="text-sm font-medium">{selectedImage.filename}</p>
                       <p className="text-xs text-muted-foreground">
-                        {(selectedImage.sizeKB / 1024).toFixed(1)} MB
+                        {selectedImage.sizeKB > 0 
+                          ? `${(selectedImage.sizeKB / 1024).toFixed(1)} MB`
+                          : 'Size unknown'
+                        }
                       </p>
                       <Button
                         type="button"

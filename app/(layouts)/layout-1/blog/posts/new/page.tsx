@@ -12,10 +12,26 @@ import { RichTextEditor } from '@/components/cms/RichTextEditor';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { PostDraftSchema, PostDraft } from '@/lib/validation';
+import { PostDraftSchema } from '@/lib/validation';
+import { z } from 'zod';
 import { getCurrentUserPermissions } from '@/lib/rbac';
 import { MediaLibrary } from '@/components/cms/MediaLibrary';
 import { MediaAsset } from '@/lib/api';
+
+// Form schema that matches the form requirements
+const NewPostFormSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
+  slug: z.string().min(1, 'Slug is required').max(100, 'Slug must be less than 100 characters'),
+  body: z.string().optional(),
+  tags: z.array(z.string()),
+  categories: z.array(z.string()),
+  featuredImage: z.string().optional(),
+  seoTitle: z.string().max(60, 'SEO title must be less than 60 characters').optional(),
+  metaDescription: z.string().max(160, 'Meta description must be less than 160 characters').optional(),
+  jsonLd: z.boolean(),
+});
+
+type PostDraft = z.infer<typeof NewPostFormSchema>;
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -27,7 +43,7 @@ export default function NewPostPage() {
   const [selectedImage, setSelectedImage] = React.useState<MediaAsset | null>(null);
 
   const form = useForm<PostDraft>({
-    resolver: zodResolver(PostDraftSchema),
+    resolver: zodResolver(NewPostFormSchema),
     defaultValues: {
       title: '',
       slug: '',
@@ -225,7 +241,7 @@ export default function NewPostPage() {
                     maxLength={60}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    {watchedValues.seoTitle.length}/60 characters
+                    {watchedValues.seoTitle?.length || 0}/60 characters
                   </p>
                 </div>
 
@@ -239,7 +255,7 @@ export default function NewPostPage() {
                     rows={3}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    {watchedValues.metaDescription.length}/160 characters
+                    {watchedValues.metaDescription?.length || 0}/160 characters
                   </p>
                 </div>
               </CardContent>

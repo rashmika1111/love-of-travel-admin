@@ -6,7 +6,7 @@ import { getSessionRole, can } from '@/lib/rbac';
 // GET /api/admin/posts/[id] - Get post by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const role = getSessionRole();
@@ -18,7 +18,8 @@ export async function GET(
       );
     }
 
-    const post = await getPost(params.id);
+    const resolvedParams = await params;
+    const post = await getPost(resolvedParams.id);
     
     if (!post) {
       return NextResponse.json(
@@ -40,7 +41,7 @@ export async function GET(
 // PATCH /api/admin/posts/[id] - Update post
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const role = getSessionRole();
@@ -53,6 +54,9 @@ export async function PATCH(
     }
 
     const body = await request.json();
+    
+    console.log('API received data:', body);
+    console.log('Featured image in request:', body.featuredImage);
     
     // Determine which schema to use based on status
     const status = body.status;
@@ -72,7 +76,8 @@ export async function PATCH(
       validatedData = PostDraftSchema.parse(body);
     }
 
-    const updatedPost = await updatePost(params.id, validatedData);
+    const resolvedParams = await params;
+    const updatedPost = await updatePost(resolvedParams.id, validatedData);
     
     if (!updatedPost) {
       return NextResponse.json(
@@ -102,7 +107,7 @@ export async function PATCH(
 // DELETE /api/admin/posts/[id] - Delete post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const role = getSessionRole();
@@ -114,7 +119,8 @@ export async function DELETE(
       );
     }
 
-    const success = await deletePost(params.id);
+    const resolvedParams = await params;
+    const success = await deletePost(resolvedParams.id);
     
     if (!success) {
       return NextResponse.json(

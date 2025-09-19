@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { getCurrentUserPermissions, getSessionRole } from '@/lib/rbac';
-import { Post, PostSearch } from '@/lib/api';
+import { Post } from '@/lib/api';
+import { PostSearch } from '@/lib/validation';
 
 export default function ScheduledPostsPage() {
   const router = useRouter();
