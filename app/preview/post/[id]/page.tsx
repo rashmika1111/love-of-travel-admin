@@ -1,46 +1,33 @@
-'use client';
-
-import * as React from 'react';
-import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Calendar, User, Tag, Folder, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Layout1 } from '@/components/layouts/layout-1';
-import { Post } from '@/lib/api';
+import { getPost } from '@/lib/api';
 
-export default function PreviewPostPage() {
-  const params = useParams();
-  const postId = params.id as string;
+interface PreviewPostPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default async function PreviewPostPage({ params }: PreviewPostPageProps) {
+  const resolvedParams = await params;
+  const postId = resolvedParams.id;
   
-  const [post, setPost] = React.useState<Post | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  let post;
+  let error: string | null = null;
 
-  // Fetch post data
-  React.useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const response = await fetch(`/api/admin/posts/${postId}`);
-        if (response.ok) {
-          const postData = await response.json();
-          setPost(postData);
-        } else {
-          setError('Post not found');
-        }
-      } catch (error) {
-        console.error('Error fetching post:', error);
-        setError('Failed to load post');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (postId) {
-      fetchPost();
+  try {
+    post = await getPost(postId);
+    if (!post) {
+      error = 'Post not found';
     }
-  }, [postId]);
+  } catch (err) {
+    console.error('Error fetching post:', err);
+    error = 'Failed to load post';
+  }
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -66,16 +53,6 @@ export default function PreviewPostPage() {
       minute: '2-digit',
     }).format(new Date(date));
   };
-
-  if (loading) {
-    return (
-      <Layout1>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">Loading preview...</div>
-        </div>
-      </Layout1>
-    );
-  }
 
   if (error || !post) {
     return (
@@ -105,7 +82,7 @@ export default function PreviewPostPage() {
               <Eye className="h-3 w-3" />
               Preview Mode
             </Badge>
-            <Link href={`/layout-1/blog/posts/${post.id}/edit`}>
+            <Link href="/layout-1/blog/posts">
               <Button variant="outline" size="sm">
                 Edit Post
               </Button>
@@ -253,7 +230,7 @@ export default function PreviewPostPage() {
                   This is how your post will appear to readers when published
                 </p>
                 <div className="flex items-center justify-center gap-4 mt-4">
-                  <Link href={`/layout-1/blog/posts/${post.id}/edit`}>
+                  <Link href="/layout-1/blog/posts">
                     <Button variant="outline" size="sm">
                       Edit Post
                     </Button>

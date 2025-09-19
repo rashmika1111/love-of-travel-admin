@@ -95,12 +95,23 @@ export function MediaLibrary({
       try {
         const formData = new FormData();
         formData.append('file', file);
-        await fetch('/api/admin/media', {
+        const response = await fetch('/api/admin/media', {
           method: 'POST',
           body: formData,
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('API upload failed:', errorData);
+          throw new Error(`Upload failed: ${errorData.error || 'Unknown error'}`);
+        }
+        
+        const result = await response.json();
+        console.log('API upload successful:', result);
       } catch (error) {
-        console.warn('Failed to save to API, but file is available locally:', error);
+        console.error('Failed to save to API:', error);
+        alert('Failed to save file to server. Please try again.');
+        return; // Don't add to local state if API fails
       }
     } catch (error) {
       console.error('Error processing file:', error);
@@ -241,7 +252,7 @@ export function MediaLibrary({
                           {(asset.sizeKB / 1024).toFixed(1)} MB
                         </p>
                         {isSelected && (
-                          <Badge variant="default" className="text-xs w-fit">
+                          <Badge variant="secondary" className="text-xs w-fit">
                             Selected
                           </Badge>
                         )}

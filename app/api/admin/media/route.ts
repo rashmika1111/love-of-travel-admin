@@ -41,7 +41,11 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
+    console.log('Media upload - formData entries:', Array.from(formData.entries()));
+    console.log('Media upload - file received:', file);
+
     if (!file) {
+      console.error('Media upload - no file in formData');
       return NextResponse.json(
         { error: 'No file provided' },
         { status: 400 }
@@ -66,13 +70,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('Media upload - file received:', {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
+    
     const result = await uploadMedia(file);
+    
+    console.log('Media upload - result:', result);
     
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error('Error uploading media:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    });
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

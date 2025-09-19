@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { getCurrentUserPermissions, getSessionRole } from '@/lib/rbac';
-import { Post, PostSearch } from '@/lib/api';
+import { Post } from '@/lib/api';
+import { PostSearch } from '@/lib/validation';
 
 export default function PostsPage() {
   const router = useRouter();
@@ -21,9 +22,10 @@ export default function PostsPage() {
   const [selectedPosts, setSelectedPosts] = React.useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
   const [deletePostId, setDeletePostId] = React.useState<string | null>(null);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = React.useState(false);
   
-  // Filters
-  const [filters, setFilters] = React.useState<PostSearch>({
+  // Filters - memoized to prevent infinite re-renders
+  const filters = React.useMemo(() => ({
     search: searchParams.get('search') || '',
     status: (searchParams.get('status') as 'all' | 'draft' | 'review' | 'scheduled' | 'published') || 'all',
     author: searchParams.get('author') || '',
@@ -31,7 +33,9 @@ export default function PostsPage() {
     dateTo: searchParams.get('dateTo') || '',
     page: parseInt(searchParams.get('page') || '1'),
     limit: parseInt(searchParams.get('limit') || '10'),
-  });
+  }), [searchParams]);
+
+  const [filtersState, setFiltersState] = React.useState<PostSearch>(filters);
 
   const permissions = getCurrentUserPermissions();
   const currentRole = getSessionRole();
@@ -41,7 +45,7 @@ export default function PostsPage() {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
+      Object.entries(filtersState).forEach(([key, value]) => {
         if (value) queryParams.set(key, value.toString());
       });
 
@@ -51,6 +55,7 @@ export default function PostsPage() {
       if (response.ok) {
         setPosts(data.rows);
         setTotal(data.total);
+        setHasInitiallyLoaded(true);
       } else {
         console.error('Error fetching posts:', data.error);
       }
@@ -59,29 +64,32 @@ export default function PostsPage() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filtersState]);
 
+  // Initial load only
   React.useEffect(() => {
     fetchPosts();
-  }, [fetchPosts]);
+  }, []); // Empty dependency array - only run once on mount
 
   // Update URL when filters change
   React.useEffect(() => {
     const queryParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
+    Object.entries(filtersState).forEach(([key, value]) => {
       if (value) queryParams.set(key, value.toString());
     });
     
     const newUrl = `${window.location.pathname}?${queryParams}`;
     window.history.replaceState({}, '', newUrl);
-  }, [filters]);
+  }, [filtersState]);
 
   const handleFilterChange = (key: keyof PostSearch, value: string | number) => {
-    setFilters(prev => ({
+    setFiltersState(prev => ({
       ...prev,
       [key]: value,
       page: 1, // Reset to first page when filters change
     }));
+    // Fetch posts when filters change
+    fetchPosts();
   };
 
   const handleSelectPost = (postId: string, checked: boolean) => {
@@ -157,7 +165,7 @@ export default function PostsPage() {
     const variants = {
       draft: 'secondary',
       review: 'warning',
-      scheduled: 'default',
+      scheduled: 'info',
       published: 'success',
     } as const;
 
@@ -349,6 +357,7 @@ export default function PostsPage() {
                         className="rounded border-input"
                       />
                     </th>
+                    <th className="text-left p-4 font-medium">Thumbnail</th>
                     <th className="text-left p-4 font-medium">Title</th>
                     <th className="text-left p-4 font-medium">Status</th>
                     <th className="text-left p-4 font-medium">Author</th>
@@ -367,6 +376,26 @@ export default function PostsPage() {
                           onChange={(e) => handleSelectPost(post.id, e.target.checked)}
                           className="rounded border-input"
                         />
+                      </td>
+                      <td className="p-4">
+                        {post.featuredImage ? (
+                          <div className="w-16 h-12 rounded-md overflow-hidden bg-muted">
+                            <img
+                              src={post.featuredImage}
+                              alt={post.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                target.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No Image</div>';
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-16 h-12 rounded-md bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                            No Image
+                          </div>
+                        )}
                       </td>
                       <td className="p-4">
                         <div>
