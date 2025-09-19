@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Save, Eye, Send, X } from 'lucide-react';
+import { Save, Eye, Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -403,7 +403,7 @@ export default function NewPostPage() {
                         alt={selectedImage.filename}
                         className="w-full h-48 object-cover rounded-md"
                         onLoad={() => console.log('Featured image loaded successfully:', selectedImage.filename)}
-                        onError={(e) => {
+                        onError={() => {
                           console.error('Featured image failed to load:', selectedImage.filename, selectedImage.url);
                         }}
                       />

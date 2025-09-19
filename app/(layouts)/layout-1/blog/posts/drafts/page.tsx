@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Plus, Filter, MoreHorizontal, Edit, Eye, Trash2, Clock } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Eye, Trash2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { getCurrentUserPermissions, getSessionRole } from '@/lib/rbac';
 import { Post, PostSearch } from '@/lib/api';
-import { cn } from '@/lib/utils';
 
 export default function DraftPostsPage() {
   const router = useRouter();
@@ -80,7 +79,7 @@ export default function DraftPostsPage() {
     window.history.replaceState({}, '', newUrl);
   }, [filters]);
 
-  const handleFilterChange = (key: keyof PostSearch, value: any) => {
+  const handleFilterChange = (key: keyof PostSearch, value: string | number) => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
   };
 

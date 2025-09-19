@@ -14,10 +14,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { X, Save, Eye, Calendar, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { X, Save, Eye, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { PostDraftSchema } from '@/lib/validation';
 import { getCurrentUserPermissions } from '@/lib/rbac';
-import { getPost, updatePost, Post } from '@/lib/api';
+import { Post } from '@/lib/api';
 import { MediaLibrary } from '@/components/cms/MediaLibrary';
 import { MediaAsset } from '@/lib/api';
 
