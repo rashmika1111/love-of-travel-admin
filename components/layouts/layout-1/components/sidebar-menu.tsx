@@ -24,8 +24,54 @@ export function SidebarMenu() {
 
   // Memoize matchPath to prevent unnecessary re-renders
   const matchPath = useCallback(
-    (path: string): boolean =>
-      path === pathname || (path.length > 1 && pathname.startsWith(path) && path !== '/layout-1'),
+    (path: string): boolean => {
+      // Don't match generated values (like root-3, child-1-2, etc.)
+      if (path.startsWith('root-') || path.startsWith('child-') || path.startsWith('disabled-')) {
+        return false;
+      }
+
+      // Don't match empty paths
+      if (!path || path === '') {
+        return false;
+      }
+
+      // Exact match
+      if (path === pathname) {
+        return true;
+      }
+
+      // Don't match root path
+      if (path === '/layout-1') {
+        return false;
+      }
+
+      // Special handling for blog posts section to prevent parent highlighting
+      if (path === '/layout-1/blog/posts') {
+        // Only match if it's exactly the posts page, not child pages
+        return pathname === '/layout-1/blog/posts';
+      }
+
+      // Special handling for blog users section to prevent parent highlighting
+      if (path === '/layout-1/blog/users') {
+        // Only match if it's exactly the users page, not child pages
+        return pathname === '/layout-1/blog/users';
+      }
+
+      // Special handling for blog comments section to prevent parent highlighting
+      if (path === '/layout-1/blog/comments') {
+        // Only match if it's exactly the comments page, not child pages
+        return pathname === '/layout-1/blog/comments';
+      }
+
+      // For other paths, check if pathname starts with path
+      // but ensure it's followed by a slash or end of string to avoid partial matches
+      if (path.length > 1) {
+        const pathWithSlash = path + '/';
+        return pathname.startsWith(pathWithSlash) || pathname === path;
+      }
+
+      return false;
+    },
     [pathname],
   );
 

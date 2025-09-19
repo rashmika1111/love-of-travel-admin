@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Plus,
   ArrowUpRight,
+  Calendar,
   ArrowDownRight,
   Star,
   Search,
@@ -367,11 +368,112 @@ export default function BlogDashboard() {
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Plus className="mr-2 h-4 w-4" />
-            New Post
-          </Button>
+          <Link href="/layout-1/blog/posts/new">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Plus className="mr-2 h-4 w-4" />
+              New Post
+            </Button>
+          </Link>
         </div>
+      </div>
+
+      {/* Quick Navigation */}
+      <div className="ml-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <Link href="/layout-1/blog/posts">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Posts</h3>
+                  <p className="text-sm text-muted-foreground">Manage posts</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/layout-1/blog/posts/new">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <Plus className="h-6 w-6 text-green-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">New Post</h3>
+                  <p className="text-sm text-muted-foreground">Create new post</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/layout-1/blog/comments">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <MessageSquare className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Comments</h3>
+                  <p className="text-sm text-muted-foreground">Manage comments</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/layout-1/blog/subscribers">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <Users className="h-6 w-6 text-purple-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Subscribers</h3>
+                  <p className="text-sm text-muted-foreground">Manage subscribers</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/layout-1/blog/posts/drafts">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-orange-500/10 rounded-lg">
+                  <FileText className="h-6 w-6 text-orange-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Draft Posts</h3>
+                  <p className="text-sm text-muted-foreground">Manage drafts</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/layout-1/blog/posts/scheduled">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Calendar className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Scheduled Posts</h3>
+                  <p className="text-sm text-muted-foreground">Manage scheduled</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Main Dashboard Grid */}
