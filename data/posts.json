@@ -1,0 +1,59 @@
+[
+  {
+    "id": "1",
+    "title": "Welcome to Love of Travel",
+    "slug": "welcome-to-love-of-travel",
+    "body": "This is our first blog post about travel adventures...",
+    "tags": [
+      "travel",
+      "welcome"
+    ],
+    "categories": [
+      "general"
+    ],
+    "status": "published",
+    "author": "John Doe",
+    "createdAt": "2024-01-15T00:00:00.000Z",
+    "updatedAt": "2024-01-15T00:00:00.000Z",
+    "publishedAt": "2024-01-15T00:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "title": "Top 10 Destinations for 2024",
+    "slug": "top-10-destinations-2024",
+    "body": "Discover the most amazing places to visit this year...",
+    "tags": [
+      "destinations",
+      "2024",
+      "travel"
+    ],
+    "categories": [
+      "destinations"
+    ],
+    "status": "draft",
+    "author": "Jane Smith",
+    "createdAt": "2024-01-20T00:00:00.000Z",
+    "updatedAt": "2025-09-19T14:28:57.001Z",
+    "featuredImage": "",
+    "seoTitle": "",
+    "metaDescription": "",
+    "jsonLd": false
+  },
+  {
+    "id": "3",
+    "title": "Travel Tips for Beginners",
+    "slug": "travel-tips-beginners",
+    "body": "Essential advice for first-time travelers...",
+    "tags": [
+      "tips",
+      "beginners"
+    ],
+    "categories": [
+      "tips"
+    ],
+    "status": "review",
+    "author": "Mike Johnson",
+    "createdAt": "2024-01-25T00:00:00.000Z",
+    "updatedAt": "2024-01-25T00:00:00.000Z"
+  }
+]

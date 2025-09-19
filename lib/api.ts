@@ -1,4 +1,5 @@
 import { PostDraft, PostPublish, PostSearch, BulkAction, MediaUpload } from './validation';
+import { loadPosts, savePosts, loadMediaAssets, saveMediaAssets } from './persistence';
 
 export type Post = PostDraft & {
   id: string;
@@ -19,9 +20,10 @@ export type MediaAsset = {
   uploadedAt: Date;
 };
 
-// Mock data store
-const posts = new Map<string, Post>();
-const mediaAssets = new Map<string, MediaAsset>();
+// Data stores - will be loaded from persistence
+let posts = new Map<string, Post>();
+let mediaAssets = new Map<string, MediaAsset>();
+
 
 // Initialize with some mock data
 const mockPosts: Post[] = [
@@ -68,12 +70,43 @@ const mockMedia: MediaAsset[] = [
   // No preloaded media - start with empty library
 ];
 
-// Initialize mock data
-mockPosts.forEach(post => posts.set(post.id, post));
-mockMedia.forEach(asset => mediaAssets.set(asset.id, asset));
+// Initialize mock data after loading from persistence
+async function initializeMockData() {
+  const loadedPosts = await loadPosts();
+  const loadedMedia = await loadMediaAssets();
+  
+  // Load existing data
+  posts = loadedPosts;
+  mediaAssets = loadedMedia;
+  
+  // Only add mock data if no data exists
+  if (loadedPosts.size === 0) {
+    mockPosts.forEach(post => posts.set(post.id, post));
+    await savePosts(posts);
+  }
+  
+  if (loadedMedia.size === 0) {
+    mockMedia.forEach(asset => mediaAssets.set(asset.id, asset));
+    await saveMediaAssets(mediaAssets);
+  }
+}
+
+// Track initialization state
+let isInitialized = false;
+const initPromise = initializeMockData().then(() => {
+  isInitialized = true;
+}).catch(console.error);
+
+// Wait for initialization to complete
+async function ensureInitialized() {
+  if (!isInitialized) {
+    await initPromise;
+  }
+}
 
 // Posts API
 export async function createPost(data: PostDraft): Promise<{ id: string }> {
+  await ensureInitialized();
   const id = Math.random().toString(36).substr(2, 9);
   const post: Post = {
     ...data,
@@ -85,10 +118,12 @@ export async function createPost(data: PostDraft): Promise<{ id: string }> {
   };
   
   posts.set(id, post);
+  await savePosts(posts);
   return { id };
 }
 
 export async function getPosts(searchParams: PostSearch): Promise<{ rows: Post[]; total: number }> {
+  await ensureInitialized();
   let filteredPosts = Array.from(posts.values());
   
   // Apply filters
@@ -134,10 +169,12 @@ export async function getPosts(searchParams: PostSearch): Promise<{ rows: Post[]
 }
 
 export async function getPost(id: string): Promise<Post | null> {
+  await ensureInitialized();
   return posts.get(id) || null;
 }
 
 export async function updatePost(id: string, data: Partial<PostPublish>): Promise<Post | null> {
+  await ensureInitialized();
   const existing = posts.get(id);
   if (!existing) return null;
   
@@ -148,14 +185,21 @@ export async function updatePost(id: string, data: Partial<PostPublish>): Promis
   };
   
   posts.set(id, updated);
+  await savePosts(posts);
   return updated;
 }
 
 export async function deletePost(id: string): Promise<boolean> {
-  return posts.delete(id);
+  await ensureInitialized();
+  const deleted = posts.delete(id);
+  if (deleted) {
+    await savePosts(posts);
+  }
+  return deleted;
 }
 
 export async function bulkUpdatePosts(action: BulkAction): Promise<{ success: number; failed: number }> {
+  await ensureInitialized();
   let success = 0;
   let failed = 0;
   
@@ -181,6 +225,11 @@ export async function bulkUpdatePosts(action: BulkAction): Promise<{ success: nu
     }
   }
   
+  // Save changes after bulk operations
+  if (success > 0) {
+    await savePosts(posts);
+  }
+  
   return { success, failed };
 }
 
@@ -192,12 +241,14 @@ export async function generatePreviewUrl(id: string): Promise<{ previewUrl: stri
 
 // Media API
 export async function getMediaAssets(): Promise<MediaAsset[]> {
+  await ensureInitialized();
   return Array.from(mediaAssets.values()).sort((a, b) => 
     b.uploadedAt.getTime() - a.uploadedAt.getTime()
   );
 }
 
 export async function uploadMedia(file: File): Promise<{ id: string; url: string }> {
+  await ensureInitialized();
   // Mock implementation - in real app, upload to storage service
   const id = Math.random().toString(36).substr(2, 9);
   
@@ -220,6 +271,7 @@ export async function uploadMedia(file: File): Promise<{ id: string; url: string
   };
   
   mediaAssets.set(id, asset);
+  await saveMediaAssets(mediaAssets);
   return { id, url };
 }
 
