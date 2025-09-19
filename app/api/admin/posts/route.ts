@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     const searchParams_ = {
       search,
-      status: status as any,
+      status: status as 'all' | 'draft' | 'review' | 'scheduled' | 'published',
       author,
       dateFrom,
       dateTo,

@@ -26,7 +26,7 @@ export default function PostsPage() {
   // Filters
   const [filters, setFilters] = React.useState<PostSearch>({
     search: searchParams.get('search') || '',
-    status: (searchParams.get('status') as any) || 'all',
+    status: (searchParams.get('status') as 'all' | 'draft' | 'review' | 'scheduled' | 'published') || 'all',
     author: searchParams.get('author') || '',
     dateFrom: searchParams.get('dateFrom') || '',
     dateTo: searchParams.get('dateTo') || '',
