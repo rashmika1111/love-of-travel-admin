@@ -313,7 +313,7 @@ export function GallerySectionEditor({ section, onChange, onClose }: GallerySect
         isOpen={showMediaLibrary}
         onClose={() => setShowMediaLibrary(false)}
         onSelect={(asset) => {
-          addImage(asset.url, asset.altText);
+          addImage(asset.url, asset.filename);
           setShowMediaLibrary(false);
         }}
       />
