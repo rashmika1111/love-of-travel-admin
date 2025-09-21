@@ -105,3 +105,5 @@ The blog CMS is fully functional and ready for development. You can start creati
 2. Go to `http://localhost:3000/(layouts)/layout-1/blog/dashboard`
 3. Click "Posts" to manage your blog posts
 4. Click "New Post" to create your first post
+
+
