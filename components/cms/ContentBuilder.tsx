@@ -151,7 +151,23 @@ export function ContentBuilder({ sections, onChange, className }: ContentBuilder
           images: [],
           layout: 'grid',
           columns: 3,
-          spacing: 'md'
+          spacing: 'md',
+          responsive: {
+            mobile: { layout: 'grid', columns: 2 },
+            desktop: { layout: 'grid', columns: 3 }
+          },
+          hoverEffects: {
+            enabled: true,
+            scale: 1.03,
+            shadow: true,
+            overlay: true
+          },
+          animation: {
+            enabled: true,
+            type: 'fadeIn',
+            duration: 0.5,
+            stagger: 0.1
+          }
         } as GallerySection;
         break;
       case 'popular-posts':

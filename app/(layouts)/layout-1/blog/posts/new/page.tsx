@@ -35,7 +35,7 @@ export default function NewPostPage() {
   const [contentSections, setContentSections] = React.useState<ContentSection[]>([]);
 
   const form = useForm<PostDraft>({
-    resolver: zodResolver(PostDraftSchema),
+    resolver: zodResolver(PostDraftSchema) as any,
     defaultValues: {
       title: '',
       slug: '',
@@ -138,9 +138,6 @@ export default function NewPostPage() {
     }
   };
 
-  const onSubmit = (data: PostDraft) => {
-    handleSaveDraft(data);
-  };
 
   const handleImageSelect = (asset: MediaAsset) => {
     console.log('Image selected:', asset);
@@ -163,7 +160,7 @@ export default function NewPostPage() {
         </div>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit((data) => handleSaveDraft(data as PostDraft))} className="space-y-6">
         <Tabs defaultValue="content" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="content">Content Builder</TabsTrigger>

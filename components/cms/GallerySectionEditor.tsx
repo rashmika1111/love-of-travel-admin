@@ -98,8 +98,8 @@ export function GallerySectionEditor({ section, onChange, onClose }: GallerySect
     return (
       <div className={cn(
         'grid',
-        gridClasses[section.columns],
-        spacingClasses[section.spacing]
+        gridClasses[section.columns as keyof typeof gridClasses],
+        spacingClasses[section.spacing as keyof typeof spacingClasses]
       )}>
         {section.images.map((image, index) => (
           <div key={index} className="relative group">
