@@ -1,10 +1,5 @@
 import {
   RemixiconComponentType,
-  RiBankLine,
-  RiFacebookCircleLine,
-  RiGoogleLine,
-  RiInstagramLine,
-  RiStore2Line,
 } from '@remixicon/react';
 import {
   ArrowDown,
@@ -15,7 +10,6 @@ import {
   Mail,
   MousePointer,
   Eye,
-  UserPlus,
   UserMinus,
 } from 'lucide-react';
 import { Badge, BadgeDot } from '@/components/ui/badge';

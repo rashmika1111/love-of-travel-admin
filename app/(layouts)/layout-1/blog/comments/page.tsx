@@ -62,7 +62,7 @@ export default function CommentModerationPage() {
     isOffensive?: boolean;
     avatar?: string;
   } | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [, setIsDetailOpen] = useState(false);
   const { toast } = useToast();
 
   const comments = [
@@ -207,6 +207,7 @@ export default function CommentModerationPage() {
         description: `Comment ${action}ed successfully.`,
       });
     } catch (error) {
+      console.error('Error moderating comment:', error);
       toast({
         title: "Error",
         description: "Failed to moderate comment. Please try again.",
@@ -229,6 +230,7 @@ export default function CommentModerationPage() {
       
       setSelectedComments([]);
     } catch (error) {
+      console.error('Error performing bulk action:', error);
       toast({
         title: "Error",
         description: "Failed to perform bulk action. Please try again.",

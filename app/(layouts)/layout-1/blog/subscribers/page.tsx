@@ -14,13 +14,12 @@ import {
   CheckCircle,
   Eye,
   MousePointer,
-  LineChart,
   RefreshCw,
   Download,
   AlertTriangle,
   ExternalLink
 } from 'lucide-react';
-import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ComposedChart } from 'recharts';
+import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { SubscriberMetrics } from '@/components/subscriber-metrics';
 import { Highlights } from '@/components/highlights';
 
