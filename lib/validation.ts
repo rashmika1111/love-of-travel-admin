@@ -194,7 +194,7 @@ export const PostDraftSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
   slug: z.string().min(1, 'Slug is required').max(100, 'Slug must be less than 100 characters'),
   body: z.string().optional(),
-  contentSections: z.array(ContentSectionSchema).default([]),
+  contentSections: z.array(ContentSectionSchema),
   tags: z.array(z.string()).default([]),
   categories: z.array(z.string()).default([]),
   featuredImage: z.string().optional(),
