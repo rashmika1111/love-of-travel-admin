@@ -12,7 +12,7 @@ async function readJsonFile<T>(file: string): Promise<T | null> {
     const data = await fs.readFile(file, 'utf-8');
     if (!data || data.trim() === '' || data.trim() === '[]') return null;
     return JSON.parse(data) as T;
-  } catch (error: unknown) {
+  } catch {
     // file missing or unreadable
     return null;
   }

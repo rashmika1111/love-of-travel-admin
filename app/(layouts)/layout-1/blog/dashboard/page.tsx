@@ -69,66 +69,6 @@ export default function BlogDashboard() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleWidgetClick = (widgetId: string) => {
-    // Analytics tracking
-    console.log('dashboard_widget_click', { widget_id: widgetId });
-    // Navigate to filtered view
-    // router.push(`/blog/posts?status=${widgetId}`);
-  };
-
-  const WidgetCard = ({ 
-    title, 
-    value, 
-    change, 
-    period, 
-    icon: Icon, 
-    color, 
-    onClick,
-    isLoading: loading 
-  }: {
-    title: string;
-    value: number | string;
-    change: number;
-    period: string;
-    icon: React.ComponentType<{ className?: string }>;
-    color: string;
-    onClick: () => void;
-    isLoading: boolean;
-  }) => (
-    <Card 
-      className="cursor-pointer hover:shadow-md transition-shadow"
-      onClick={onClick}
-    >
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className={`p-2 rounded-full ${color}`}>
-          <Icon className="h-4 w-4 text-white" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <Skeleton className="h-8 w-20 mb-2" />
-        ) : (
-          <div className="text-2xl font-bold">{value}</div>
-        )}
-        {loading ? (
-          <Skeleton className="h-4 w-24" />
-        ) : (
-          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-            {change > 0 ? (
-              <ArrowUpRight className="h-3 w-3 text-green-600" />
-            ) : (
-              <ArrowDownRight className="h-3 w-3 text-red-600" />
-            )}
-            <span className={change > 0 ? 'text-green-600' : 'text-red-600'}>
-              {Math.abs(change)}%
-            </span>
-            <span>vs previous {period}</span>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
 
   // Sample data for the new dashboard sections
   const contributors = [

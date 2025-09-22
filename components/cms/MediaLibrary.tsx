@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Image, Video, File, Upload, X } from 'lucide-react';
+import { Image, Video, File, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

@@ -15,7 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { X, Save, Eye, Image as ImageIcon, Trash2 } from 'lucide-react';
-import { PostDraftSchema } from '@/lib/validation';
 import { getCurrentUserPermissions } from '@/lib/rbac';
 import { Post } from '@/lib/api';
 import { MediaLibrary } from '@/components/cms/MediaLibrary';

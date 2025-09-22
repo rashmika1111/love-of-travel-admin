@@ -22,7 +22,6 @@ export default function PostsPage() {
   const [selectedPosts, setSelectedPosts] = React.useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
   const [deletePostId, setDeletePostId] = React.useState<string | null>(null);
-  const [hasInitiallyLoaded, setHasInitiallyLoaded] = React.useState(false);
   
   // Filters - memoized to prevent infinite re-renders
   const filters = React.useMemo(() => ({
@@ -55,7 +54,6 @@ export default function PostsPage() {
       if (response.ok) {
         setPosts(data.rows);
         setTotal(data.total);
-        setHasInitiallyLoaded(true);
       } else {
         console.error('Error fetching posts:', data.error);
       }
@@ -69,7 +67,7 @@ export default function PostsPage() {
   // Initial load only
   React.useEffect(() => {
     fetchPosts();
-  }, []); // Empty dependency array - only run once on mount
+  }, [fetchPosts]); // Include fetchPosts in dependency array
 
   // Update URL when filters change
   React.useEffect(() => {

@@ -4,7 +4,6 @@ import * as React from 'react';
 import { X, Image, Eye, Share2, Facebook, Twitter, Linkedin, Copy, Settings, Palette, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -56,9 +55,9 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
 
   const toggleSocialPlatform = (platform: string) => {
     const platforms = section.socialSharing.platforms;
-    const newPlatforms = platforms.includes(platform as any)
+    const newPlatforms = platforms.includes(platform as 'facebook' | 'twitter' | 'linkedin' | 'copy' | 'share')
       ? platforms.filter(p => p !== platform)
-      : [...platforms, platform as any];
+      : [...platforms, platform as 'facebook' | 'twitter' | 'linkedin' | 'copy' | 'share'];
     
     updateSocialSharing({ platforms: newPlatforms });
   };
@@ -431,7 +430,7 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
                   <Label>Position</Label>
                   <Select
                     value={section.backgroundPosition}
-                    onValueChange={(value) => updateSection({ backgroundPosition: value as any })}
+                    onValueChange={(value) => updateSection({ backgroundPosition: value as 'center' | 'top' | 'bottom' | 'left' | 'right' })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -449,7 +448,7 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
                   <Label>Size</Label>
                   <Select
                     value={section.backgroundSize}
-                    onValueChange={(value) => updateSection({ backgroundSize: value as any })}
+                    onValueChange={(value) => updateSection({ backgroundSize: value as 'cover' | 'contain' | 'auto' })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -504,7 +503,7 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
                   <Label>Animation Type</Label>
                   <Select
                     value={section.animation.type}
-                    onValueChange={(value) => updateAnimation({ type: value as any })}
+                    onValueChange={(value) => updateAnimation({ type: value as 'fadeIn' | 'slideUp' | 'scaleIn' | 'none' })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -560,7 +559,7 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
                   <Label>Position</Label>
                   <Select
                     value={section.socialSharing.position}
-                    onValueChange={(value) => updateSocialSharing({ position: value as any })}
+                    onValueChange={(value) => updateSocialSharing({ position: value as 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -578,7 +577,7 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
                   <Label>Style</Label>
                   <Select
                     value={section.socialSharing.style}
-                    onValueChange={(value) => updateSocialSharing({ style: value as any })}
+                    onValueChange={(value) => updateSocialSharing({ style: value as 'glass' | 'solid' | 'outline' })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -604,7 +603,7 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
                       <div key={key} className="flex items-center space-x-2">
                         <Checkbox
                           id={key}
-                          checked={section.socialSharing.platforms.includes(key as any)}
+                          checked={section.socialSharing.platforms.includes(key as 'facebook' | 'twitter' | 'linkedin' | 'copy' | 'share')}
                           onCheckedChange={() => toggleSocialPlatform(key)}
                         />
                         <Label htmlFor={key} className="flex items-center gap-2 text-sm">

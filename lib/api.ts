@@ -1,4 +1,4 @@
-import { PostDraft, PostPublish, PostSearch, BulkAction, MediaUpload } from './validation';
+import { PostDraft, PostPublish, PostSearch, BulkAction } from './validation';
 import { loadPosts, savePosts, loadMediaAssets, saveMediaAssets } from './persistence';
 
 export type Post = PostDraft & {

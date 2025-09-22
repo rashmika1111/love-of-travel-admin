@@ -3,7 +3,7 @@ import { getMediaAssets, uploadMedia } from '@/lib/api';
 import { getSessionRole, can } from '@/lib/rbac';
 
 // GET /api/admin/media - List media assets
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const role = getSessionRole();
     

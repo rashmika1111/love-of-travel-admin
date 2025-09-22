@@ -206,6 +206,7 @@ export default function RoleManagementPage() {
       setSelectedUser(null);
       setNewRole('');
     } catch (error) {
+      console.error('Error updating role:', error);
       toast({
         title: "Error",
         description: "Failed to update role. Please try again.",

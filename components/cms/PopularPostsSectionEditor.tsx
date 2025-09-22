@@ -1,13 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { X, Eye, Plus, Trash2, Image, Users } from 'lucide-react';
+import { X, Eye, Plus, Trash2, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 import { PopularPostsSection } from '@/lib/validation';
 import { MediaLibrary } from './MediaLibrary';
 
@@ -57,7 +56,7 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
     updateSection({ sidePosts: newSidePosts });
   };
 
-  const handleImageSelect = (asset: any) => {
+  const handleImageSelect = (asset: { url: string }) => {
     if (mediaLibraryTarget === 'featured') {
       updateFeaturedPost({ imageUrl: asset.url });
     } else if (mediaLibraryTarget === 'side' && sidePostIndex !== null) {

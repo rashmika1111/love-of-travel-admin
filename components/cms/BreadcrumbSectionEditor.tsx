@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { X, Plus, Trash2, Home, ChevronRight } from 'lucide-react';
+import { X, Plus, Trash2, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -232,7 +232,7 @@ export function BreadcrumbSectionEditor({ section, onChange, onClose }: Breadcru
                   <Label>Separator</Label>
                   <Select
                     value={section.style.separator}
-                    onValueChange={(value) => updateStyle({ separator: value as any })}
+                    onValueChange={(value) => updateStyle({ separator: value as '>' | '→' | '|' | '/' })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -250,7 +250,7 @@ export function BreadcrumbSectionEditor({ section, onChange, onClose }: Breadcru
                   <Label>Text Size</Label>
                   <Select
                     value={section.style.textSize}
-                    onValueChange={(value) => updateStyle({ textSize: value as any })}
+                    onValueChange={(value) => updateStyle({ textSize: value as 'sm' | 'base' | 'lg' })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -269,7 +269,7 @@ export function BreadcrumbSectionEditor({ section, onChange, onClose }: Breadcru
                   <Label>Color</Label>
                   <Select
                     value={section.style.color}
-                    onValueChange={(value) => updateStyle({ color: value as any })}
+                    onValueChange={(value) => updateStyle({ color: value as 'gray' | 'blue' | 'black' })}
                   >
                     <SelectTrigger>
                       <SelectValue />

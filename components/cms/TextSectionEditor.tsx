@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { X, Eye, AlignLeft, AlignCenter, AlignRight, AlignJustify, Palette, Zap, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -251,7 +252,7 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
                     key={value}
                     variant={section.alignment === value ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => updateSection({ alignment: value as any })}
+                    onClick={() => updateSection({ alignment: value as 'left' | 'center' | 'right' | 'justify' })}
                     className="flex items-center gap-2"
                   >
                     <Icon className="w-4 h-4" />
@@ -276,7 +277,7 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
               <Label>Font Family</Label>
               <Select
                 value={section.fontFamily}
-                onValueChange={(value) => updateSection({ fontFamily: value as any })}
+                onValueChange={(value) => updateSection({ fontFamily: value as 'inter' | 'serif' | 'sans' | 'mono' })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -296,7 +297,7 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
               <Label>Font Size</Label>
               <Select
                 value={section.fontSize}
-                onValueChange={(value) => updateSection({ fontSize: value as any })}
+                onValueChange={(value) => updateSection({ fontSize: value as 'sm' | 'base' | 'lg' | 'xl' })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -316,7 +317,7 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
               <Label>Line Height</Label>
               <Select
                 value={section.lineHeight}
-                onValueChange={(value) => updateSection({ lineHeight: value as any })}
+                onValueChange={(value) => updateSection({ lineHeight: value as 'tight' | 'snug' | 'normal' | 'relaxed' | 'loose' })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -354,7 +355,7 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
                   <Label>Drop Cap Size</Label>
                   <Select
                     value={section.dropCap.size}
-                    onValueChange={(value) => updateDropCap({ size: value as any })}
+                    onValueChange={(value) => updateDropCap({ size: value as 'text-4xl' | 'text-5xl' | 'text-6xl' })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -384,7 +385,7 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
                   <Label>Font Weight</Label>
                   <Select
                     value={section.dropCap.fontWeight}
-                    onValueChange={(value) => updateDropCap({ fontWeight: value as any })}
+                    onValueChange={(value) => updateDropCap({ fontWeight: value as 'normal' | 'medium' | 'semibold' | 'bold' })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -433,7 +434,7 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
                   <Label>Animation Type</Label>
                   <Select
                     value={section.animation.type}
-                    onValueChange={(value) => updateAnimation({ type: value as any })}
+                    onValueChange={(value) => updateAnimation({ type: value as 'fadeIn' | 'slideUp' | 'slideInLeft' | 'slideInRight' | 'none' })}
                   >
                     <SelectTrigger>
                       <SelectValue />

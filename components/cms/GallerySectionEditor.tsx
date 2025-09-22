@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { X, Eye, Image, Plus, Trash2, GripVertical } from 'lucide-react';
+import { X, Eye, Image, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -180,7 +180,7 @@ export function GallerySectionEditor({ section, onChange, onClose }: GallerySect
             <Label>Layout</Label>
             <Select
               value={section.layout}
-              onValueChange={(value) => updateSection({ layout: value as any })}
+              onValueChange={(value) => updateSection({ layout: value as 'grid' | 'masonry' | 'carousel' | 'postcard' | 'complex' })}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -220,7 +220,7 @@ export function GallerySectionEditor({ section, onChange, onClose }: GallerySect
           <Label>Spacing</Label>
           <Select
             value={section.spacing}
-            onValueChange={(value) => updateSection({ spacing: value as any })}
+            onValueChange={(value) => updateSection({ spacing: value as 'sm' | 'md' | 'lg' })}
           >
             <SelectTrigger>
               <SelectValue />

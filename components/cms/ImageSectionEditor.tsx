@@ -209,7 +209,7 @@ export function ImageSectionEditor({ section, onChange, onClose }: ImageSectionE
                 key={value}
                 variant={section.alignment === value ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => updateSection({ alignment: value as any })}
+                onClick={() => updateSection({ alignment: value as 'left' | 'center' | 'right' })}
                 className="flex items-center gap-2"
               >
                 <Icon className="w-4 h-4" />

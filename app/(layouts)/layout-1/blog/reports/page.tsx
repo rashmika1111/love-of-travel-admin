@@ -505,7 +505,7 @@ export default function ReportDownloadPage() {
                 </tr>
               </thead>
               <tbody>
-                {currentData.map((item, index) => (
+                {currentData.map((item) => (
                   <tr key={item.id} className="border-b hover:bg-muted/30 transition-colors group">
                     <td className="px-1 py-3">
                       <div className="p-1">
