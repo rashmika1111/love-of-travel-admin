@@ -26,7 +26,7 @@ export const HeroSectionSchema = z.object({
   parallaxSpeed: z.number().min(0).max(2).default(0.5),
   // Background positioning
   backgroundPosition: z.enum(['center', 'top', 'bottom', 'left', 'right']).default('center'),
-  backgroundSize: z.enum(['cover', 'contain', 'auto']).default('cover'),
+  backgroundSize: z.enum(['cover', 'contain']).default('cover'),
   // Animation settings
   animation: z.object({
     enabled: z.boolean().default(true),
@@ -194,7 +194,7 @@ export const PostDraftSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
   slug: z.string().min(1, 'Slug is required').max(100, 'Slug must be less than 100 characters'),
   body: z.string().optional(),
-  contentSections: z.array(ContentSectionSchema),
+  contentSections: z.array(ContentSectionSchema).default([]),
   tags: z.array(z.string()).default([]),
   categories: z.array(z.string()).default([]),
   featuredImage: z.string().optional(),

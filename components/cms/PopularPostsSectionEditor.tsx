@@ -28,7 +28,7 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
 
   const updateFeaturedPost = (updates: Partial<PopularPostsSection['featuredPost']>) => {
     updateSection({
-      featuredPost: { ...section.featuredPost, ...updates }
+      featuredPost: section.featuredPost ? { ...section.featuredPost, ...updates } : updates as PopularPostsSection['featuredPost']
     });
   };
 
@@ -115,7 +115,6 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
                         <div className="w-full h-full bg-muted flex items-center justify-center">
                           <div className="text-center text-muted-foreground">
                             {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                            {/* eslint-disable-next-line jsx-a11y/alt-text */}
                             <Image className="w-12 h-12 mx-auto mb-2" />
                             <p>No image selected</p>
                           </div>
@@ -159,6 +158,7 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
                             />
                           ) : (
                             <div className="w-full h-full bg-muted flex items-center justify-center">
+                              {/* eslint-disable-next-line jsx-a11y/alt-text */}
                               <Image className="w-8 h-8 text-muted-foreground" />
                             </div>
                           )}
@@ -244,6 +244,7 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
                 setShowMediaLibrary(true);
               }}
             >
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <Image className="w-4 h-4 mr-2" />
               Select Image
             </Button>
@@ -327,6 +328,7 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
                         setShowMediaLibrary(true);
                       }}
                     >
+                      {/* eslint-disable-next-line jsx-a11y/alt-text */}
                       <Image className="w-4 h-4 mr-2" />
                       Image
                     </Button>

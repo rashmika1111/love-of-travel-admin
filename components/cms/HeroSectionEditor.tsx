@@ -450,7 +450,7 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
                   <Label>Size</Label>
                   <Select
                     value={section.backgroundSize}
-                    onValueChange={(value) => updateSection({ backgroundSize: value as 'cover' | 'contain' | 'auto' })}
+                    onValueChange={(value) => updateSection({ backgroundSize: value as 'cover' | 'contain' })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -458,7 +458,6 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
                     <SelectContent>
                       <SelectItem value="cover">Cover</SelectItem>
                       <SelectItem value="contain">Contain</SelectItem>
-                      <SelectItem value="auto">Auto</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -32,6 +32,14 @@ const mockPosts: Post[] = [
     title: 'Welcome to Love of Travel',
     slug: 'welcome-to-love-of-travel',
     body: 'This is our first blog post about travel adventures...',
+    contentSections: [],
+    breadcrumb: {
+      enabled: true,
+      items: [
+        { label: 'Home', href: '/' },
+        { label: 'Destinations', href: '#destinations' }
+      ]
+    },
     tags: ['travel', 'welcome'],
     categories: ['general'],
     status: 'published',
@@ -46,6 +54,14 @@ const mockPosts: Post[] = [
     title: 'Top 10 Destinations for 2024',
     slug: 'top-10-destinations-2024',
     body: 'Discover the most amazing places to visit this year...',
+    contentSections: [],
+    breadcrumb: {
+      enabled: true,
+      items: [
+        { label: 'Home', href: '/' },
+        { label: 'Destinations', href: '#destinations' }
+      ]
+    },
     tags: ['destinations', '2024', 'travel'],
     categories: ['destinations'],
     status: 'draft',
@@ -59,6 +75,14 @@ const mockPosts: Post[] = [
     title: 'Travel Tips for Beginners',
     slug: 'travel-tips-beginners',
     body: 'Essential advice for first-time travelers...',
+    contentSections: [],
+    breadcrumb: {
+      enabled: true,
+      items: [
+        { label: 'Home', href: '/' },
+        { label: 'Tips', href: '#tips' }
+      ]
+    },
     tags: ['tips', 'beginners'],
     categories: ['tips'],
     status: 'review',

@@ -209,7 +209,7 @@ export function ImageSectionEditor({ section, onChange, onClose }: ImageSectionE
             {ALIGNMENT_OPTIONS.map(({ value, label, icon: Icon }) => (
               <Button
                 key={value}
-                variant={section.alignment === value ? 'default' : 'outline'}
+                variant={section.alignment === value ? 'secondary' : 'outline'}
                 size="sm"
                 onClick={() => updateSection({ alignment: value as 'left' | 'center' | 'right' })}
                 className="flex items-center gap-2"
