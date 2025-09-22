@@ -136,6 +136,7 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
             ) : (
               <div className="w-full h-full bg-muted flex items-center justify-center">
                 <div className="text-center text-muted-foreground">
+                  {/* eslint-disable-next-line jsx-a11y/alt-text */}
                   <Image className="w-12 h-12 mx-auto mb-2" />
                   <p>No background image selected</p>
                 </div>
@@ -257,6 +258,7 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
                   variant="outline"
                   onClick={() => setShowMediaLibrary(true)}
                 >
+                  {/* eslint-disable-next-line jsx-a11y/alt-text */}
                   <Image className="w-4 h-4" />
                 </Button>
               </div>

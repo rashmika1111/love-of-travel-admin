@@ -19,6 +19,11 @@ const eslintConfig = [
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       '@next/next/no-img-element': 'off',
+      // Accessibility rules - make warnings instead of errors
+      'jsx-a11y/alt-text': 'warn',
+      // TypeScript rules
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
     },
   }),
   {

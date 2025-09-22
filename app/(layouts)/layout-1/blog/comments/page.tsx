@@ -62,7 +62,7 @@ export default function CommentModerationPage() {
     isOffensive?: boolean;
     avatar?: string;
   } | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [, setIsDetailOpen] = useState(false);
   const { toast } = useToast();
 
   const comments = [
