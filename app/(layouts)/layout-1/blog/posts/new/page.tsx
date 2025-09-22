@@ -35,7 +35,7 @@ export default function NewPostPage() {
   const [contentSections, setContentSections] = React.useState<ContentSection[]>([]);
 
   const form = useForm<PostDraft>({
-    resolver: zodResolver(PostDraftSchema) as any,
+    resolver: zodResolver(PostDraftSchema),
     defaultValues: {
       title: '',
       slug: '',

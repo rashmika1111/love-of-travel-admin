@@ -57,7 +57,7 @@ export function ImageSectionEditor({ section, onChange, onClose }: ImageSectionE
         ) : (
           <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center">
             <div className="text-center text-muted-foreground">
-              <Image className="w-12 h-12 mx-auto mb-2" />
+              <Image className="w-12 h-12 mx-auto mb-2" alt="No image placeholder" />
               <p>No image selected</p>
             </div>
           </div>
@@ -139,7 +139,7 @@ export function ImageSectionEditor({ section, onChange, onClose }: ImageSectionE
               variant="outline"
               onClick={() => setShowMediaLibrary(true)}
             >
-              <Image className="w-4 h-4" />
+              <Image className="w-4 h-4" alt="Select image" />
             </Button>
           </div>
         </div>

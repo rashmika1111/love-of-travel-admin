@@ -73,7 +73,7 @@ export function GallerySectionEditor({ section, onChange, onClose }: GallerySect
       return (
         <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center">
           <div className="text-center text-muted-foreground">
-            <Image className="w-12 h-12 mx-auto mb-2" />
+            <Image className="w-12 h-12 mx-auto mb-2" alt="No images placeholder" />
             <p>No images in gallery</p>
           </div>
         </div>

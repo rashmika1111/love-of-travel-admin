@@ -114,7 +114,7 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
                       ) : (
                         <div className="w-full h-full bg-muted flex items-center justify-center">
                           <div className="text-center text-muted-foreground">
-                            <Image className="w-12 h-12 mx-auto mb-2" />
+                            <Image className="w-12 h-12 mx-auto mb-2" alt="No image placeholder" />
                             <p>No image selected</p>
                           </div>
                         </div>
@@ -157,7 +157,7 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
                             />
                           ) : (
                             <div className="w-full h-full bg-muted flex items-center justify-center">
-                              <Image className="w-8 h-8 text-muted-foreground" />
+                              <Image className="w-8 h-8 text-muted-foreground" alt="Add post" />
                             </div>
                           )}
                         </div>
@@ -242,7 +242,7 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
                 setShowMediaLibrary(true);
               }}
             >
-              <Image className="w-4 h-4 mr-2" />
+              <Image className="w-4 h-4 mr-2" alt="Select image" />
               Select Image
             </Button>
           </div>
@@ -325,7 +325,7 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
                         setShowMediaLibrary(true);
                       }}
                     >
-                      <Image className="w-4 h-4 mr-2" />
+                      <Image className="w-4 h-4 mr-2" alt="Add image" />
                       Image
                     </Button>
                     <Button

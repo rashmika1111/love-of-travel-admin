@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { 
   FileText,
   MessageSquare,
@@ -40,8 +39,8 @@ import {
 import Image from 'next/image';
 
 export default function BlogDashboard() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [widgets, setWidgets] = useState({
+  const [, setIsLoading] = useState(true);
+  const [, setWidgets] = useState({
     newPosts: { count: 0, change: 0, period: '24h' },
     pendingReviews: { count: 0, change: 0, period: '7d' },
     commentsQueue: { count: 0, change: 0, period: '24h' },

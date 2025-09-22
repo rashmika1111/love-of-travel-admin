@@ -136,7 +136,7 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
             ) : (
               <div className="w-full h-full bg-muted flex items-center justify-center">
                 <div className="text-center text-muted-foreground">
-                  <Image className="w-12 h-12 mx-auto mb-2" />
+                  <Image className="w-12 h-12 mx-auto mb-2" alt="No background image placeholder" />
                   <p>No background image selected</p>
                 </div>
               </div>
@@ -257,7 +257,7 @@ export function HeroSectionEditor({ section, onChange, onClose }: HeroSectionEdi
                   variant="outline"
                   onClick={() => setShowMediaLibrary(true)}
                 >
-                  <Image className="w-4 h-4" />
+                  <Image className="w-4 h-4" alt="Select image" />
                 </Button>
               </div>
               {section.backgroundImage && (
