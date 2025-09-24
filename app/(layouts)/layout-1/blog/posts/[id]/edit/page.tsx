@@ -21,7 +21,7 @@ import { getCurrentUserPermissions } from '@/lib/rbac';
 import { Post } from '@/lib/api';
 import { MediaLibrary } from '@/components/cms/MediaLibrary';
 import { MediaAsset } from '@/lib/api';
-import { ContentSection } from '@/lib/validation';
+import { ContentSection, PostDraftSchema } from '@/lib/validation';
 import { useSnackbar } from '@/components/ui/snackbar';
 
 // Use the same schema as new post to include contentSections
