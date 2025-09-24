@@ -46,6 +46,8 @@ export default function EditPostPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
   const [isAutoSaving, setIsAutoSaving] = React.useState(false);
   const [lastSaved, setLastSaved] = React.useState<Date | null>(null);
+  const [autoSaveTimeout, setAutoSaveTimeout] = React.useState<NodeJS.Timeout | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = React.useState(true);
   
   const permissions = getCurrentUserPermissions();
   
@@ -81,6 +83,60 @@ export default function EditPostPage() {
 
   const watchedValues = watch();
 
+  // Auto-save for general form changes
+  React.useEffect(() => {
+    if (!postId || !post || isInitialLoad) return; // Don't auto-save on initial load
+    
+    // Set unsaved changes flag
+    setHasUnsavedChanges(true);
+    
+    // Clear existing timeout
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout);
+    }
+    
+    // Auto-save after 2 seconds of inactivity
+    const timeoutId = setTimeout(() => {
+      autoSaveForm();
+    }, 2000);
+    
+    setAutoSaveTimeout(timeoutId);
+    
+    // Cleanup function
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [watchedValues.title, watchedValues.slug, watchedValues.body, watchedValues.tags, watchedValues.categories, watchedValues.featuredImage, watchedValues.seoTitle, watchedValues.metaDescription, watchedValues.jsonLd, watchedValues.breadcrumb, watchedValues.readingTime, postId, post, isInitialLoad]);
+
+  const autoSaveForm = async () => {
+    if (!postId || isAutoSaving) return;
+    
+    setIsAutoSaving(true);
+    try {
+      const response = await fetch(`/api/admin/posts/${postId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...watchedValues,
+          contentSections: contentSections,
+        }),
+      });
+
+      if (response.ok) {
+        setLastSaved(new Date());
+        setHasUnsavedChanges(false);
+      }
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    } finally {
+      setIsAutoSaving(false);
+    }
+  };
+
   // Auto-save function for content sections
   const autoSaveContentSections = async (sections: ContentSection[]) => {
     if (!postId || isAutoSaving) return;
@@ -102,7 +158,7 @@ export default function EditPostPage() {
         setHasUnsavedChanges(false);
       }
     } catch (error) {
-      console.error('Auto-save failed:', error);
+      console.error('Content sections auto-save failed:', error);
     } finally {
       setIsAutoSaving(false);
     }
@@ -114,13 +170,27 @@ export default function EditPostPage() {
     setValue('contentSections', newSections);
     setHasUnsavedChanges(true);
     
+    // Clear existing timeout
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout);
+    }
+    
     // Auto-save after 2 seconds of inactivity
     const timeoutId = setTimeout(() => {
       autoSaveContentSections(newSections);
     }, 2000);
     
-    return () => clearTimeout(timeoutId);
+    setAutoSaveTimeout(timeoutId);
   };
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+      }
+    };
+  }, [autoSaveTimeout]);
 
   // Fetch post data
   React.useEffect(() => {
@@ -169,16 +239,20 @@ export default function EditPostPage() {
               uploadedAt: new Date(),
             });
           }
-        } else {
-          console.error('Failed to fetch post');
-          router.push('/layout-1/blog/posts');
-        }
-      } catch (error) {
-        console.error('Error fetching post:', error);
-        router.push('/layout-1/blog/posts');
-      } finally {
-        setLoading(false);
-      }
+         } else {
+           console.error('Failed to fetch post');
+           router.push('/layout-1/blog/posts');
+         }
+       } catch (error) {
+         console.error('Error fetching post:', error);
+         router.push('/layout-1/blog/posts');
+       } finally {
+         setLoading(false);
+         // Allow auto-save after initial load is complete
+         setTimeout(() => {
+           setIsInitialLoad(false);
+         }, 1000);
+       }
     };
 
     if (postId) {
@@ -259,24 +333,45 @@ export default function EditPostPage() {
 
   return (
     <div className="space-y-6 ml-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Edit Post</h1>
-          <p className="text-muted-foreground">
-            Update your blog post or article
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handlePreview}>
-            <Eye className="h-4 w-4 mr-2" />
-            Preview
-          </Button>
-          <Button onClick={() => router.push('/layout-1/blog/posts')}>
-            Back to Posts
-          </Button>
-        </div>
-      </div>
+       {/* Header */}
+       <div className="flex items-center justify-between">
+         <div>
+           <h1 className="text-2xl font-bold">Edit Post</h1>
+           <p className="text-muted-foreground">
+             Update your blog post or article
+           </p>
+           {/* Auto-save status indicator */}
+           <div className="flex items-center space-x-4 text-sm mt-2">
+             {isAutoSaving && (
+               <div className="flex items-center text-blue-600">
+                 <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"></div>
+                 <span>Auto-saving...</span>
+               </div>
+             )}
+             {lastSaved && !hasUnsavedChanges && !isAutoSaving && (
+               <div className="flex items-center text-green-600">
+                 <span>✓</span>
+                 <span className="ml-1">Saved {lastSaved.toLocaleTimeString()}</span>
+               </div>
+             )}
+             {hasUnsavedChanges && !isAutoSaving && (
+               <div className="flex items-center text-amber-600">
+                 <span>•</span>
+                 <span className="ml-1">You have unsaved changes</span>
+               </div>
+             )}
+           </div>
+         </div>
+         <div className="flex gap-2">
+           <Button variant="outline" onClick={handlePreview}>
+             <Eye className="h-4 w-4 mr-2" />
+             Preview
+           </Button>
+           <Button onClick={() => router.push('/layout-1/blog/posts')}>
+             Back to Posts
+           </Button>
+         </div>
+       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Tabs defaultValue="content" className="w-full">
