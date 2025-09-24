@@ -132,19 +132,19 @@ export const PopularPostsSectionSchema = z.object({
   title: z.string().default('Popular Posts'),
   description: z.string().optional(),
   featuredPost: z.object({
-    title: z.string(),
-    excerpt: z.string(),
-    imageUrl: z.string(),
-    readTime: z.string(),
-    publishDate: z.string(),
-    category: z.string()
+    title: z.string().default(''),
+    excerpt: z.string().default(''),
+    imageUrl: z.string().default(''),
+    readTime: z.string().default(''),
+    publishDate: z.string().default(''),
+    category: z.string().default('')
   }).optional(),
   sidePosts: z.array(z.object({
-    title: z.string(),
-    excerpt: z.string(),
-    imageUrl: z.string(),
-    readTime: z.string(),
-    publishDate: z.string()
+    title: z.string().default(''),
+    excerpt: z.string().default(''),
+    imageUrl: z.string().default(''),
+    readTime: z.string().default(''),
+    publishDate: z.string().default('')
   })).max(3).default([])
 });
 

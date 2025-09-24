@@ -8,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useSnackbar } from '@/components/ui/snackbar';
 import { getCurrentUserPermissions, getSessionRole } from '@/lib/rbac';
 import { Post } from '@/lib/api';
 import { PostSearch } from '@/lib/validation';
@@ -15,6 +18,7 @@ import { PostSearch } from '@/lib/validation';
 export default function PostsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showSnackbar } = useSnackbar();
   
   const [posts, setPosts] = React.useState<Post[]>([]);
   const [total, setTotal] = React.useState(0);
@@ -22,6 +26,9 @@ export default function PostsPage() {
   const [selectedPosts, setSelectedPosts] = React.useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
   const [deletePostId, setDeletePostId] = React.useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = React.useState(false);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = React.useState(false);
   
   // Filters - memoized to prevent infinite re-renders
   const filters = React.useMemo(() => ({
@@ -64,10 +71,10 @@ export default function PostsPage() {
     }
   }, [filtersState]);
 
-  // Initial load only
+  // Initial load and when filters change
   React.useEffect(() => {
     fetchPosts();
-  }, [fetchPosts]); // Include fetchPosts in dependency array
+  }, [fetchPosts]);
 
   // Update URL when filters change
   React.useEffect(() => {
@@ -86,8 +93,6 @@ export default function PostsPage() {
       [key]: value,
       page: 1, // Reset to first page when filters change
     }));
-    // Fetch posts when filters change
-    fetchPosts();
   };
 
   const handleSelectPost = (postId: string, checked: boolean) => {
@@ -103,21 +108,67 @@ export default function PostsPage() {
   };
 
   const handleDeletePost = async (postId: string) => {
+    setIsDeleting(true);
     try {
       const response = await fetch(`/api/admin/posts/${postId}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       
       if (response.ok) {
         await fetchPosts(); // Refresh the list
         setShowDeleteModal(false);
         setDeletePostId(null);
+        showSnackbar('Post deleted successfully', 'success');
       } else {
         const data = await response.json();
         console.error('Error deleting post:', data.error);
+        showSnackbar(`Failed to delete post: ${data.error || 'Unknown error'}`, 'error');
       }
     } catch (error) {
       console.error('Error deleting post:', error);
+      showSnackbar('Failed to delete post. Please try again.', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    setShowBulkDeleteModal(false);
+    
+    // Delete selected posts
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const postId of selectedPosts) {
+      try {
+        const response = await fetch(`/api/admin/posts/${postId}`, { 
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        if (response.ok) {
+          successCount++;
+        } else {
+          failCount++;
+          console.error(`Failed to delete post ${postId}`);
+        }
+      } catch (error) {
+        failCount++;
+        console.error(`Error deleting post ${postId}:`, error);
+      }
+    }
+    
+    setSelectedPosts([]);
+    await fetchPosts();
+    
+    if (failCount > 0) {
+      showSnackbar(`Deleted ${successCount} post(s) successfully. ${failCount} post(s) failed to delete.`, 'warning');
+    } else {
+      showSnackbar(`Successfully deleted ${successCount} post(s).`, 'success');
     }
   };
 
@@ -126,26 +177,46 @@ export default function PostsPage() {
 
     try {
       if (action === 'delete') {
-        // Delete selected posts
-        for (const postId of selectedPosts) {
-          await fetch(`/api/admin/posts/${postId}`, { method: 'DELETE' });
-        }
-        setSelectedPosts([]);
-        await fetchPosts();
+        // Show confirmation dialog for bulk delete
+        setShowBulkDeleteModal(true);
+        return;
       } else if (action === 'changeStatus' && status) {
         // Change status of selected posts
+        let successCount = 0;
+        let failCount = 0;
+        
         for (const postId of selectedPosts) {
-          await fetch(`/api/admin/posts/${postId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status }),
-          });
+          try {
+            const response = await fetch(`/api/admin/posts/${postId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status }),
+            });
+            if (response.ok) {
+              successCount++;
+            } else {
+              failCount++;
+              const errorData = await response.json();
+              console.error(`Failed to change status for post ${postId}:`, errorData);
+            }
+          } catch (error) {
+            failCount++;
+            console.error(`Error changing status for post ${postId}:`, error);
+          }
         }
+        
         setSelectedPosts([]);
         await fetchPosts();
+        
+        if (failCount > 0) {
+          showSnackbar(`Changed status to ${status.charAt(0).toUpperCase() + status.slice(1)} for ${successCount} post(s) successfully. ${failCount} post(s) failed to update.`, 'warning');
+        } else {
+          showSnackbar(`Successfully changed status to ${status.charAt(0).toUpperCase() + status.slice(1)} for ${successCount} post(s).`, 'success');
+        }
       }
     } catch (error) {
       console.error('Error performing bulk action:', error);
+      showSnackbar('An error occurred while performing the bulk action. Please try again.', 'error');
     }
   };
 
@@ -501,35 +572,32 @@ export default function PostsPage() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Delete Post</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">Are you sure you want to delete this post? This action cannot be undone.</p>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setDeletePostId(null);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => deletePostId && handleDeletePost(deletePostId)}
-                >
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <ConfirmationDialog
+        open={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeletePostId(null);
+        }}
+        onConfirm={() => deletePostId && handleDeletePost(deletePostId)}
+        title="Delete Post"
+        description="Are you sure you want to delete this post? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        loading={isDeleting}
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <ConfirmationDialog
+        open={showBulkDeleteModal}
+        onClose={() => setShowBulkDeleteModal(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        title="Delete Multiple Posts"
+        description={`Are you sure you want to delete ${selectedPosts.length} post(s)? This action cannot be undone.`}
+        confirmText="Delete All"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }

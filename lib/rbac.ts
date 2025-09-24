@@ -38,7 +38,8 @@ export function can(userRole: UserRole, action: Action): boolean {
     editor: [
       'post:create',
       'post:edit',
-      'post:publish', 
+      'post:publish',
+      'post:delete',
       'post:review',
       'post:schedule',
       'media:upload'
@@ -72,7 +73,8 @@ export function getCurrentUserPermissions(): Action[] {
     editor: [
       'post:create',
       'post:edit',
-      'post:publish', 
+      'post:publish',
+      'post:delete',
       'post:review',
       'post:schedule',
       'media:upload'
