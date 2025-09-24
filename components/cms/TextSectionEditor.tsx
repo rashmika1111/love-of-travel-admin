@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { X, Eye, AlignLeft, AlignCenter, AlignRight, AlignJustify, Palette, Zap, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,7 +79,15 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
 
   const updateDropCap = (updates: Partial<TextSection['dropCap']>) => {
     updateSection({
-      dropCap: { ...section.dropCap, ...updates }
+      dropCap: { 
+        enabled: false,
+        size: 'text-4xl',
+        color: 'text-gray-900',
+        fontWeight: 'semibold',
+        float: true,
+        ...section.dropCap, 
+        ...updates 
+      }
     });
   };
 
@@ -133,13 +142,13 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
         fontFamilyClasses[section.fontFamily],
         lineHeightClasses[section.lineHeight]
       )}>
-        {section.dropCap.enabled && section.content ? (
+        {section.dropCap?.enabled && section.content ? (
           <p className={cn("leading-relaxed", lineHeightClasses[section.lineHeight])}>
             <span className={cn(
               "float-left mr-2 leading-none",
-              section.dropCap.size,
-              fontWeightClasses[section.dropCap.fontWeight],
-              section.dropCap.color
+              section.dropCap?.size,
+              fontWeightClasses[section.dropCap?.fontWeight],
+              section.dropCap?.color
             )}>
               {section.content.charAt(0)}
             </span>
@@ -342,18 +351,18 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
                 </p>
               </div>
               <Switch
-                checked={section.dropCap.enabled}
+                checked={section.dropCap?.enabled || false}
                 onCheckedChange={(checked) => updateDropCap({ enabled: checked })}
               />
             </div>
 
-            {section.dropCap.enabled && (
+            {section.dropCap?.enabled && (
               <>
                 {/* Drop Cap Size */}
                 <div className="space-y-2">
                   <Label>Drop Cap Size</Label>
                   <Select
-                    value={section.dropCap.size}
+                    value={section.dropCap?.size || 'text-4xl'}
                     onValueChange={(value) => updateDropCap({ size: value as any })}
                   >
                     <SelectTrigger>
@@ -373,7 +382,7 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
                 <div className="space-y-2">
                   <Label>Drop Cap Color</Label>
                   <Input
-                    value={section.dropCap.color}
+                    value={section.dropCap?.color || 'text-gray-900'}
                     onChange={(e) => updateDropCap({ color: e.target.value })}
                     placeholder="text-gray-900"
                   />
@@ -383,7 +392,7 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
                 <div className="space-y-2">
                   <Label>Font Weight</Label>
                   <Select
-                    value={section.dropCap.fontWeight}
+                    value={section.dropCap?.fontWeight || 'semibold'}
                     onValueChange={(value) => updateDropCap({ fontWeight: value as any })}
                   >
                     <SelectTrigger>
@@ -408,7 +417,7 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
                     </p>
                   </div>
                   <Switch
-                    checked={section.dropCap.float}
+                    checked={section.dropCap?.float || true}
                     onCheckedChange={(checked) => updateDropCap({ float: checked })}
                   />
                 </div>

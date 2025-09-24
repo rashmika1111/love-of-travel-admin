@@ -105,7 +105,7 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
                   </div>
                   
                   {section.featuredPost && (
-                    <div className="relative w-full h-[500px] overflow-hidden shadow-lg group cursor-pointer rounded-[24px] p-[38px_44px]">
+                    <div className="relative w-full h-[500px] overflow-hidden shadow-lg group cursor-pointer rounded-[24px]">
                       {section.featuredPost.imageUrl ? (
                         <img
                           src={section.featuredPost.imageUrl}
@@ -113,14 +113,14 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-[24px]"
                         />
                       ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <div className="w-full h-full bg-muted flex items-center justify-center rounded-[24px]">
                           <div className="text-center text-muted-foreground">
                             <Image className="w-12 h-12 mx-auto mb-2" />
                             <p>No image selected</p>
                           </div>
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-[24px]">
                         <div className="absolute top-6 left-6">
                           <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium border border-white/30">
                             Tours
@@ -415,4 +415,6 @@ export function PopularPostsSectionEditor({ section, onChange, onClose }: Popula
     </Card>
   );
 }
+
+
 
