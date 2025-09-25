@@ -55,5 +55,38 @@
     "author": "Mike Johnson",
     "createdAt": "2024-01-25T00:00:00.000Z",
     "updatedAt": "2024-01-25T00:00:00.000Z"
+  },
+  {
+    "title": "test1",
+    "slug": "tesr1",
+    "body": "<p>trtret</p>",
+    "contentSections": [],
+    "tags": [
+      "untagged"
+    ],
+    "categories": [],
+    "featuredImage": "",
+    "seoTitle": "errer",
+    "metaDescription": "ererer",
+    "breadcrumb": {
+      "enabled": true,
+      "items": [
+        {
+          "label": "Home",
+          "href": "/"
+        },
+        {
+          "label": "Destinations",
+          "href": "#destinations"
+        }
+      ]
+    },
+    "readingTime": 0,
+    "jsonLd": false,
+    "id": "wfrg800c7",
+    "author": "Current User",
+    "status": "draft",
+    "createdAt": "2025-09-24T14:01:49.970Z",
+    "updatedAt": "2025-09-24T14:01:49.970Z"
   }
 ]

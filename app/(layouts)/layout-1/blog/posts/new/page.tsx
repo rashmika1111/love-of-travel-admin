@@ -78,7 +78,7 @@ export default function NewPostPage() {
   const handleSaveDraft = async (data: PostDraft) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/admin/posts', {
+      const response = await fetch('http://localhost:5000/routes/posts/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

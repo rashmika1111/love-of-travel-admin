@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   FileText,
   MessageSquare,
@@ -17,7 +18,6 @@ import {
   RefreshCw,
   Plus,
   ArrowUpRight,
-  Calendar,
   ArrowDownRight,
   Star,
   Search,
@@ -39,8 +39,8 @@ import {
 import Image from 'next/image';
 
 export default function BlogDashboard() {
-  const [, setIsLoading] = useState(true);
-  const [, setWidgets] = useState({
+  const [isLoading, setIsLoading] = useState(true);
+  const [widgets, setWidgets] = useState({
     newPosts: { count: 0, change: 0, period: '24h' },
     pendingReviews: { count: 0, change: 0, period: '7d' },
     commentsQueue: { count: 0, change: 0, period: '24h' },
@@ -49,6 +49,31 @@ export default function BlogDashboard() {
     revenue: { count: 0, change: 0, period: '7d' },
     ctr: { count: 0, change: 0, period: '7d' },
   });
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/auth/me", {
+          method: "GET",
+          credentials: "include", // ✅ sends cookie automatically
+        });
+  
+        if (!res.ok) {
+          window.location.href = "http://localhost:3000/login";
+          return;
+        }
+  
+        const user = await res.json();
+        console.log("Logged in as:", user.fullname);
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        window.location.href = "http://localhost:3000/login";
+      }
+    };
+  
+    checkAuth();
+  }, []);
+  
 
   // Simulate loading
   useEffect(() => {
@@ -68,6 +93,66 @@ export default function BlogDashboard() {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleWidgetClick = (widgetId: string) => {
+    // Analytics tracking
+    console.log('dashboard_widget_click', { widget_id: widgetId });
+    // Navigate to filtered view
+    // router.push(`/blog/posts?status=${widgetId}`);
+  };
+
+  const WidgetCard = ({ 
+    title, 
+    value, 
+    change, 
+    period, 
+    icon: Icon, 
+    color, 
+    onClick,
+    isLoading: loading 
+  }: {
+    title: string;
+    value: number | string;
+    change: number;
+    period: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    onClick: () => void;
+    isLoading: boolean;
+  }) => (
+    <Card 
+      className="cursor-pointer hover:shadow-md transition-shadow"
+      onClick={onClick}
+    >
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <div className={`p-2 rounded-full ${color}`}>
+          <Icon className="h-4 w-4 text-white" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Skeleton className="h-8 w-20 mb-2" />
+        ) : (
+          <div className="text-2xl font-bold">{value}</div>
+        )}
+        {loading ? (
+          <Skeleton className="h-4 w-24" />
+        ) : (
+          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+            {change > 0 ? (
+              <ArrowUpRight className="h-3 w-3 text-green-600" />
+            ) : (
+              <ArrowDownRight className="h-3 w-3 text-red-600" />
+            )}
+            <span className={change > 0 ? 'text-green-600' : 'text-red-600'}>
+              {Math.abs(change)}%
+            </span>
+            <span>vs previous {period}</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   // Sample data for the new dashboard sections
   const contributors = [
@@ -307,112 +392,11 @@ export default function BlogDashboard() {
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <Link href="/layout-1/blog/posts/new">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Plus className="mr-2 h-4 w-4" />
-              New Post
-            </Button>
-          </Link>
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Plus className="mr-2 h-4 w-4" />
+            New Post
+          </Button>
         </div>
-      </div>
-
-      {/* Quick Navigation */}
-      <div className="ml-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <Link href="/layout-1/blog/posts">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <FileText className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Posts</h3>
-                  <p className="text-sm text-muted-foreground">Manage posts</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/layout-1/blog/posts/new">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-green-500/10 rounded-lg">
-                  <Plus className="h-6 w-6 text-green-500" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">New Post</h3>
-                  <p className="text-sm text-muted-foreground">Create new post</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/layout-1/blog/comments">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-blue-500/10 rounded-lg">
-                  <MessageSquare className="h-6 w-6 text-blue-500" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Comments</h3>
-                  <p className="text-sm text-muted-foreground">Manage comments</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/layout-1/blog/subscribers">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <Users className="h-6 w-6 text-purple-500" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Subscribers</h3>
-                  <p className="text-sm text-muted-foreground">Manage subscribers</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/layout-1/blog/posts/drafts">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-orange-500/10 rounded-lg">
-                  <FileText className="h-6 w-6 text-orange-500" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Draft Posts</h3>
-                  <p className="text-sm text-muted-foreground">Manage drafts</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/layout-1/blog/posts/scheduled">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-blue-500/10 rounded-lg">
-                  <Calendar className="h-6 w-6 text-blue-500" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Scheduled Posts</h3>
-                  <p className="text-sm text-muted-foreground">Manage scheduled</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
       </div>
 
       {/* Main Dashboard Grid */}

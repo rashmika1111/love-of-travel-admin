@@ -26,7 +26,6 @@ export function MediaLibrary({
   const [loading, setLoading] = React.useState(false);
   const [uploading, setUploading] = React.useState(false);
 
-  // Load media assets
   React.useEffect(() => {
     if (isOpen) {
       loadMediaAssets();
@@ -36,11 +35,35 @@ export function MediaLibrary({
   const loadMediaAssets = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/media');
-      const data = await response.json();
-      setMediaAssets(data);
+      const response = await fetch('http://localhost:5000/api/v1/media', {
+        method: 'GET',
+        credentials: 'include', // Send cookies for authentication
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        // Handle authentication errors
+        if (response.status === 401) {
+          console.error('Authentication failed - redirecting to login');
+          window.location.href = 'http://localhost:3000/login';
+          return;
+        }
+        
+        throw new Error(`HTTP error! status: ${response.status} - ${errorData.message || 'Unknown error'}`);
+      }
+      
+      const result = await response.json();
+      if (!result.success || !Array.isArray(result.data)) {
+        throw new Error('Invalid API response: Expected an array in data');
+      }
+      setMediaAssets(result.data);
     } catch (error) {
       console.error('Error loading media:', error);
+      setMediaAssets([]);
     } finally {
       setLoading(false);
     }
@@ -50,14 +73,12 @@ export function MediaLibrary({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/webm'];
     if (!allowedTypes.includes(file.type)) {
       alert('Unsupported file type. Please upload JPG, PNG, GIF, MP4, or WebM files.');
       return;
     }
 
-    // Validate file size (25MB max)
     const maxSize = 25 * 1024 * 1024; // 25MB in bytes
     if (file.size > maxSize) {
       alert('File too large. Maximum size is 25MB.');
@@ -66,53 +87,37 @@ export function MediaLibrary({
 
     setUploading(true);
     try {
-      // Create data URL for immediate preview
       const url = await new Promise<string>((resolve) => {
         const reader = new FileReader();
-        reader.onload = (e) => {
-          resolve(e.target?.result as string);
-        };
+        reader.onload = (e) => resolve(e.target?.result as string);
         reader.readAsDataURL(file);
       });
 
-      // Create new asset
-      const newAsset: MediaAsset = {
-        id: Math.random().toString(36).substr(2, 9),
-        url,
-        type: file.type.startsWith('video/') ? 'video' : 'image',
-        sizeKB: Math.round(file.size / 1024),
-        filename: file.name,
-        uploadedAt: new Date(),
-      };
+       const formData = new FormData();
+       formData.append('file', file);
+       const response = await fetch('http://localhost:5000/api/v1/media/upload', {
+         method: 'POST',
+         credentials: 'include', // Send cookies for authentication
+         body: formData,
+       });
 
-      console.log('Created new asset:', newAsset);
-      console.log('Data URL preview:', url.substring(0, 100) + '...');
-
-      // Add to local state
-      setMediaAssets(prev => [newAsset, ...prev]);
-
-      // Also save to API for persistence
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        const response = await fetch('/api/admin/media', {
-          method: 'POST',
-          body: formData,
-        });
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API upload failed:', errorData);
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('API upload failed:', errorData);
-          throw new Error(`Upload failed: ${errorData.error || 'Unknown error'}`);
+        // Handle authentication errors
+        if (response.status === 401) {
+          console.error('Authentication failed - redirecting to login');
+          window.location.href = 'http://localhost:3000/login';
+          return;
         }
         
-        const result = await response.json();
-        console.log('API upload successful:', result);
-      } catch (error) {
-        console.error('Failed to save to API:', error);
-        alert('Failed to save file to server. Please try again.');
-        return; // Don't add to local state if API fails
+        throw new Error(`Upload failed: ${errorData.message || 'Unknown error'}`);
       }
+
+      const result = await response.json();
+      console.log('API upload successful:', result);
+      setMediaAssets(prev => [result.data, ...prev]);
     } catch (error) {
       console.error('Error processing file:', error);
       alert('Failed to process file. Please try again.');
@@ -197,7 +202,6 @@ export function MediaLibrary({
                     onClick={() => onSelect(asset)}
                   >
                     <CardContent className="p-0">
-                      {/* Preview */}
                       <div className="aspect-square bg-muted rounded-t-lg flex items-center justify-center overflow-hidden relative">
                         {asset.type === 'image' ? (
                           <img
@@ -207,7 +211,6 @@ export function MediaLibrary({
                             onLoad={() => console.log('Image loaded successfully:', asset.filename)}
                             onError={(e) => {
                               console.error('Image failed to load:', asset.filename, asset.url);
-                              // Fallback for broken images
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
                               const parent = target.parentElement;
@@ -229,8 +232,6 @@ export function MediaLibrary({
                             <span className="text-xs">Video</span>
                           </div>
                         )}
-                        
-                        {/* Selection indicator */}
                         {isSelected && (
                           <div className="absolute top-2 right-2 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center">
                             <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
@@ -239,8 +240,6 @@ export function MediaLibrary({
                           </div>
                         )}
                       </div>
-
-                      {/* Info */}
                       <div className="p-3 space-y-1">
                         <div className="flex items-center gap-2">
                           <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
