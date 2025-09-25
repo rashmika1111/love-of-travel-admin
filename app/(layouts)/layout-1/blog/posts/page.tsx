@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Plus, Filter, Edit, Eye, Trash2 } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Eye, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +29,8 @@ export default function PostsPage() {
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = React.useState(false);
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = React.useState(false);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [uploadingPostId, setUploadingPostId] = React.useState<string | null>(null);
   
   // Filters - memoized to prevent infinite re-renders
   const filters = React.useMemo(() => ({
@@ -172,13 +174,48 @@ export default function PostsPage() {
     }
   };
 
-  const handleBulkAction = async (action: 'changeStatus' | 'delete', status?: string) => {
+  const handleBulkAction = async (action: 'changeStatus' | 'delete' | 'uploadToMain', status?: string) => {
     if (selectedPosts.length === 0) return;
 
     try {
       if (action === 'delete') {
         // Show confirmation dialog for bulk delete
         setShowBulkDeleteModal(true);
+        return;
+      } else if (action === 'uploadToMain') {
+        // Upload selected posts to main website
+        setIsUploading(true);
+        let successCount = 0;
+        let failCount = 0;
+        
+        for (const postId of selectedPosts) {
+          try {
+            const response = await fetch(`/api/admin/posts/${postId}/upload-to-main`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+            if (response.ok) {
+              successCount++;
+            } else {
+              failCount++;
+              const errorData = await response.json();
+              console.error(`Failed to upload post ${postId} to main website:`, errorData);
+            }
+          } catch (error) {
+            failCount++;
+            console.error(`Error uploading post ${postId} to main website:`, error);
+          }
+        }
+        
+        setSelectedPosts([]);
+        await fetchPosts();
+        setIsUploading(false);
+        
+        if (failCount > 0) {
+          showSnackbar(`Uploaded ${successCount} post(s) to main website successfully. ${failCount} post(s) failed to upload.`, 'warning');
+        } else {
+          showSnackbar(`Successfully uploaded ${successCount} post(s) to main website!`, 'success');
+        }
         return;
       } else if (action === 'changeStatus' && status) {
         // Change status of selected posts
@@ -217,6 +254,33 @@ export default function PostsPage() {
     } catch (error) {
       console.error('Error performing bulk action:', error);
       showSnackbar('An error occurred while performing the bulk action. Please try again.', 'error');
+    }
+  };
+
+  const handleUploadToMain = async (postId: string) => {
+    setIsUploading(true);
+    setUploadingPostId(postId);
+    
+    try {
+      const response = await fetch(`/api/admin/posts/${postId}/upload-to-main`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (response.ok) {
+        showSnackbar('Post uploaded to main website successfully!', 'success');
+        await fetchPosts(); // Refresh the list
+      } else {
+        const data = await response.json();
+        console.error('Error uploading post to main website:', data.error);
+        showSnackbar(`Failed to upload post: ${data.error || 'Unknown error'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error uploading post to main website:', error);
+      showSnackbar('Failed to upload post to main website. Please try again.', 'error');
+    } finally {
+      setIsUploading(false);
+      setUploadingPostId(null);
     }
   };
 
@@ -359,16 +423,19 @@ export default function PostsPage() {
                   onValueChange={(value) => {
                     if (value === 'draft' || value === 'review' || value === 'published') {
                       handleBulkAction('changeStatus', value);
+                    } else if (value === 'uploadToMain') {
+                      handleBulkAction('uploadToMain');
                     }
                   }}
                 >
                   <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Change Status" />
+                    <SelectValue placeholder="Bulk Actions" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="review">Review</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="draft">Change to Draft</SelectItem>
+                    <SelectItem value="review">Change to Review</SelectItem>
+                    <SelectItem value="published">Change to Published</SelectItem>
+                    <SelectItem value="uploadToMain">Upload to Main Website</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
@@ -515,6 +582,17 @@ export default function PostsPage() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          {permissions.includes('post:publish') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleUploadToMain(post.id)}
+                              disabled={isUploading && uploadingPostId === post.id}
+                              title="Upload to main website"
+                            >
+                              <Upload className="h-4 w-4" />
+                            </Button>
+                          )}
                           {permissions.includes('post:delete') && (
                             <Button
                               variant="ghost"
