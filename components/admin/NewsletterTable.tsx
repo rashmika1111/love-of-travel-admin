@@ -64,7 +64,7 @@ interface NewsletterTableProps {
   limit: number;
   onPageChange: (page: number) => void;
   onSubscriberSelect: (subscriber: Newsletter) => void;
-  onBulkAction: (action: string, subscriberIds: string[], data?: any) => void;
+  onBulkAction: (action: string, subscriberIds: string[], data?: { status?: string }) => void;
   loading?: boolean;
 }
 
@@ -437,3 +437,5 @@ export function NewsletterTable({
     </Card>
   );
 }
+
+

@@ -7,6 +7,7 @@ export type Action =
   | 'post:delete'
   | 'post:review'
   | 'post:schedule'
+  | 'media:view'
   | 'media:upload'
   | 'media:delete'
   | 'stats:view'
@@ -39,7 +40,9 @@ export function can(userRole: UserRole, action: Action): boolean {
       'post:delete',
       'post:review',
       'post:schedule',
+      'media:view',
       'media:upload',
+      'media:delete',
       'media:delete',
       'stats:view',
       'contact:view',
@@ -56,7 +59,9 @@ export function can(userRole: UserRole, action: Action): boolean {
       'post:delete',
       'post:review',
       'post:schedule',
+      'media:view',
       'media:upload',
+      'media:delete',
       'stats:view',
       'contact:view',
       'contact:edit',
@@ -66,7 +71,9 @@ export function can(userRole: UserRole, action: Action): boolean {
     contributor: [
       'post:create',
       'post:edit',
+      'media:view',
       'media:upload',
+      'media:delete',
       'contact:view',
       'newsletter:view'
     ]
@@ -88,7 +95,9 @@ export function getCurrentUserPermissions(): Action[] {
       'post:delete',
       'post:review',
       'post:schedule',
+      'media:view',
       'media:upload',
+      'media:delete',
       'media:delete',
       'stats:view',
       'contact:view',
@@ -105,7 +114,9 @@ export function getCurrentUserPermissions(): Action[] {
       'post:delete',
       'post:review',
       'post:schedule',
+      'media:view',
       'media:upload',
+      'media:delete',
       'stats:view',
       'contact:view',
       'contact:edit',
@@ -115,7 +126,9 @@ export function getCurrentUserPermissions(): Action[] {
     contributor: [
       'post:create',
       'post:edit',
+      'media:view',
       'media:upload',
+      'media:delete',
       'contact:view',
       'newsletter:view'
     ]

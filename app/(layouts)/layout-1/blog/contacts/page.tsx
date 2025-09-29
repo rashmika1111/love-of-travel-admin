@@ -57,7 +57,7 @@ export default function ContactsPage() {
     router.push(`/layout-1/blog/contacts/${contact._id}`);
   };
 
-  const handleBulkAction = async (action: string, contactIds: string[], data?: any) => {
+  const handleBulkAction = async (action: string, contactIds: string[], data?: { status?: string; priority?: string }) => {
     try {
       const response = await fetch('/api/admin/contacts', {
         method: 'POST',

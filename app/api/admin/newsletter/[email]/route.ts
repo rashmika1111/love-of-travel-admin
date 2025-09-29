@@ -5,7 +5,7 @@ import { getSessionRole, can } from '@/lib/rbac';
 // GET /api/admin/newsletter/[email] - Get single subscriber
 export async function GET(
   request: NextRequest,
-  { params }: { params: { email: string } }
+  { params }: { params: Promise<{ email: string }> }
 ) {
   try {
     const role = getSessionRole();
@@ -17,10 +17,12 @@ export async function GET(
       );
     }
 
+    const resolvedParams = await params;
+    
     // Mock data for now - in production, this would fetch from the backend API
     const mockSubscriber = {
       _id: '1',
-      email: params.email,
+      email: resolvedParams.email,
       status: 'active' as const,
       source: 'website' as const,
       preferences: {
@@ -62,7 +64,7 @@ export async function GET(
 // PUT /api/admin/newsletter/[email] - Update subscriber
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { email: string } }
+  { params }: { params: Promise<{ email: string }> }
 ) {
   try {
     const role = getSessionRole();
@@ -74,13 +76,14 @@ export async function PUT(
       );
     }
 
+    const resolvedParams = await params;
     const body = await request.json();
     const validatedData = NewsletterUpdateSchema.parse(body);
 
     // Mock implementation - in production, this would call the backend API
     const updatedSubscriber = {
       _id: '1',
-      email: params.email,
+      email: resolvedParams.email,
       status: validatedData.status || 'active',
       source: 'website' as const,
       preferences: {
@@ -130,8 +133,8 @@ export async function PUT(
 
 // DELETE /api/admin/newsletter/[email] - Delete subscriber
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { email: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ email: string }> }
 ) {
   try {
     const role = getSessionRole();
@@ -143,6 +146,8 @@ export async function DELETE(
       );
     }
 
+    const resolvedParams = await params;
+    
     // Mock implementation - in production, this would call the backend API
     return NextResponse.json({
       success: true,

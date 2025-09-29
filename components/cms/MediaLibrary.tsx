@@ -41,14 +41,36 @@ export function MediaLibrary({
     }
   }, [isOpen]);
 
+  // Add timeout to prevent infinite loading
+  React.useEffect(() => {
+    if (loading) {
+      const timeout = setTimeout(() => {
+        if (loading) {
+          console.warn('Media loading timeout - setting loading to false');
+          setLoading(false);
+          showSnackbar('Media loading timed out. Please try again.', 'error');
+        }
+      }, 10000); // 10 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [loading, showSnackbar]);
+
   const loadMediaAssets = async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/admin/media');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       setMediaAssets(data);
     } catch (error) {
       console.error('Error loading media:', error);
+      showSnackbar('Failed to load media library. Please try again.', 'error');
+      setMediaAssets([]); // Set empty array to prevent loading state
     } finally {
       setLoading(false);
     }
@@ -142,6 +164,8 @@ export function MediaLibrary({
         setMediaAssets(prev => prev.filter(asset => asset.id !== selectedAssetId));
         setShowDeleteSelectedModal(false);
         showSnackbar('Media asset deleted successfully', 'success');
+        // Refresh the media assets list to ensure consistency
+        await loadMediaAssets();
       } else {
         const error = await response.json();
         showSnackbar(`Failed to delete media asset: ${error.error}`, 'error');
@@ -166,6 +190,8 @@ export function MediaLibrary({
         setMediaAssets([]);
         setShowDeleteAllModal(false);
         showSnackbar(`Successfully deleted ${result.count} media assets`, 'success');
+        // Refresh the media assets list to ensure consistency
+        await loadMediaAssets();
       } else {
         const error = await response.json();
         showSnackbar(`Failed to delete all media assets: ${error.error}`, 'error');
@@ -192,6 +218,8 @@ export function MediaLibrary({
         setShowDeleteIndividualModal(false);
         setAssetToDelete(null);
         showSnackbar('Media asset deleted successfully', 'success');
+        // Refresh the media assets list to ensure consistency
+        await loadMediaAssets();
       } else {
         const error = await response.json();
         showSnackbar(`Failed to delete media asset: ${error.error}`, 'error');

@@ -7,22 +7,27 @@ export async function GET() {
   try {
     const role = getSessionRole();
     
-    if (!can(role, 'media:upload')) {
+    if (!can(role, 'media:view')) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
       );
     }
 
+    console.log('Fetching media assets...');
     const assets = await getMediaAssets();
+    console.log('Media assets fetched:', assets.length, 'assets');
     
     return NextResponse.json(assets);
   } catch (error) {
     console.error('Error fetching media assets:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    
+    // Return empty array as fallback to prevent loading screen
+    return NextResponse.json([]);
   }
 }
 

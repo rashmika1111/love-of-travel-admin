@@ -3,7 +3,7 @@ import { getSessionRole } from '@/lib/rbac';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const role = getSessionRole();
@@ -16,7 +16,8 @@ export async function POST(
       );
     }
 
-    const postId = params.id;
+    const resolvedParams = await params;
+    const postId = resolvedParams.id;
     
     if (!postId) {
       return NextResponse.json(
@@ -86,3 +87,5 @@ export async function POST(
     );
   }
 }
+
+

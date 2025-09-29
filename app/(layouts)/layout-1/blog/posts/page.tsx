@@ -106,7 +106,7 @@ export default function PostsPage() {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedPosts(checked ? posts.map(post => post.id) : []);
+    setSelectedPosts(checked && posts ? posts.map(post => post.id || post._id) : []);
   };
 
   const handleDeletePost = async (postId: string) => {
@@ -461,7 +461,7 @@ export default function PostsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {posts.length === 0 ? (
+          {!posts || posts.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-muted-foreground mb-4">
                 <Filter className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -488,7 +488,7 @@ export default function PostsPage() {
                     <th className="text-left p-4">
                       <input
                         type="checkbox"
-                        checked={selectedPosts.length === posts.length && posts.length > 0}
+                        checked={posts && selectedPosts.length === posts.length && posts.length > 0}
                         onChange={(e) => handleSelectAll(e.target.checked)}
                         className="rounded border-input"
                       />
@@ -503,13 +503,13 @@ export default function PostsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {posts.map((post) => (
-                    <tr key={post.id} className="border-b hover:bg-muted/50">
+                  {posts && posts.map((post, index) => (
+                    <tr key={post.id || post._id || `post-${index}`} className="border-b hover:bg-muted/50">
                       <td className="p-4">
                         <input
                           type="checkbox"
-                          checked={selectedPosts.includes(post.id)}
-                          onChange={(e) => handleSelectPost(post.id, e.target.checked)}
+                          checked={selectedPosts.includes(post.id || post._id)}
+                          onChange={(e) => handleSelectPost(post.id || post._id, e.target.checked)}
                           className="rounded border-input"
                         />
                       </td>
@@ -544,7 +544,7 @@ export default function PostsPage() {
                       <td className="p-4">
                         {getStatusBadge(post.status)}
                       </td>
-                      <td className="p-4 text-sm">{post.author}</td>
+                      <td className="p-4 text-sm">{typeof post.author === 'string' ? post.author : post.author.name}</td>
                       <td className="p-4 text-sm text-muted-foreground">
                         {formatDate(post.updatedAt)}
                       </td>
@@ -568,7 +568,7 @@ export default function PostsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(`/layout-1/blog/posts/${post.id}/edit`, '_blank')}
+                            onClick={() => window.open(`/layout-1/blog/posts/${String(post.id || post._id)}/edit`, '_blank')}
                             title="Edit post"
                           >
                             <Edit className="h-4 w-4" />
@@ -577,7 +577,7 @@ export default function PostsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(`/preview/post/${post.id}`, '_blank')}
+                            onClick={() => window.open(`/preview/post/${String(post.id || post._id)}`, '_blank')}
                             title="Preview post"
                           >
                             <Eye className="h-4 w-4" />
@@ -586,8 +586,8 @@ export default function PostsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleUploadToMain(post.id)}
-                              disabled={isUploading && uploadingPostId === post.id}
+                              onClick={() => handleUploadToMain(post.id || post._id)}
+                              disabled={isUploading && uploadingPostId === (post.id || post._id)}
                               title="Upload to main website"
                             >
                               <Upload className="h-4 w-4" />
@@ -598,7 +598,7 @@ export default function PostsPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                setDeletePostId(post.id);
+                                setDeletePostId(post.id || post._id);
                                 setShowDeleteModal(true);
                               }}
                               title="Delete post"

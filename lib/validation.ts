@@ -9,68 +9,63 @@ export const HeroSectionSchema = z.object({
   author: z.string().optional(),
   publishDate: z.string().optional(),
   readTime: z.string().optional(),
-  overlayOpacity: z.number().min(0).max(1).default(0.3),
+  overlayOpacity: z.number().min(0).max(1),
   // Enhanced styling options
   height: z.object({
-    mobile: z.string().default('70vh'),
-    tablet: z.string().default('80vh'),
-    desktop: z.string().default('90vh')
-  }).default({ mobile: '70vh', tablet: '80vh', desktop: '90vh' }),
+    mobile: z.string(),
+    tablet: z.string(),
+    desktop: z.string()
+  }),
   titleSize: z.object({
-    mobile: z.string().default('text-3xl'),
-    tablet: z.string().default('text-5xl'),
-    desktop: z.string().default('text-6xl')
-  }).default({ mobile: 'text-3xl', tablet: 'text-5xl', desktop: 'text-6xl' }),
+    mobile: z.string(),
+    tablet: z.string(),
+    desktop: z.string()
+  }),
   // Parallax and motion effects
-  parallaxEnabled: z.boolean().default(true),
-  parallaxSpeed: z.number().min(0).max(2).default(0.5),
+  parallaxEnabled: z.boolean(),
+  parallaxSpeed: z.number().min(0).max(2),
   // Background positioning
-  backgroundPosition: z.enum(['center', 'top', 'bottom', 'left', 'right']).default('center'),
-  backgroundSize: z.enum(['cover', 'contain']).default('cover'),
+  backgroundPosition: z.enum(['center', 'top', 'bottom', 'left', 'right']),
+  backgroundSize: z.enum(['cover', 'contain']),
   // Animation settings
   animation: z.object({
-    enabled: z.boolean().default(true),
-    type: z.enum(['fadeIn', 'slideUp', 'scaleIn', 'none']).default('fadeIn'),
-    duration: z.number().min(0.1).max(3).default(0.8),
-    delay: z.number().min(0).max(2).default(0)
-  }).default({ enabled: true, type: 'fadeIn', duration: 0.8, delay: 0 }),
+    enabled: z.boolean(),
+    type: z.enum(['fadeIn', 'slideUp', 'scaleIn', 'none']),
+    duration: z.number().min(0.1).max(3),
+    delay: z.number().min(0).max(2)
+  }),
   socialSharing: z.object({
-    enabled: z.boolean().default(true),
-    platforms: z.array(z.enum(['facebook', 'twitter', 'linkedin', 'copy', 'share'])).default(['facebook', 'twitter', 'linkedin', 'copy']),
-    position: z.enum(['bottom-right', 'bottom-left', 'top-right', 'top-left']).default('bottom-right'),
-    style: z.enum(['glass', 'solid', 'outline']).default('glass')
-  }).default({ 
-    enabled: true, 
-    platforms: ['facebook', 'twitter', 'linkedin', 'copy'], 
-    position: 'bottom-right',
-    style: 'glass'
+    enabled: z.boolean(),
+    platforms: z.array(z.enum(['facebook', 'twitter', 'linkedin', 'copy', 'share'])),
+    position: z.enum(['bottom-right', 'bottom-left', 'top-right', 'top-left']),
+    style: z.enum(['glass', 'solid', 'outline'])
   })
 });
 
 export const TextSectionSchema = z.object({
   type: z.literal('text'),
   content: z.string().min(1, 'Content is required'),
-  hasDropCap: z.boolean().default(false),
-  alignment: z.enum(['left', 'center', 'right', 'justify']).default('left'),
-  fontSize: z.enum(['sm', 'base', 'lg', 'xl']).default('base'),
+  hasDropCap: z.boolean(),
+  alignment: z.enum(['left', 'center', 'right', 'justify']),
+  fontSize: z.enum(['sm', 'base', 'lg', 'xl']),
   // Enhanced typography options
-  fontFamily: z.enum(['inter', 'serif', 'sans', 'mono']).default('inter'),
-  lineHeight: z.enum(['tight', 'snug', 'normal', 'relaxed', 'loose']).default('relaxed'),
+  fontFamily: z.enum(['inter', 'serif', 'sans', 'mono']),
+  lineHeight: z.enum(['tight', 'snug', 'normal', 'relaxed', 'loose']),
   // Drop cap styling
   dropCap: z.object({
-    enabled: z.boolean().default(false),
-    size: z.enum(['text-4xl', 'text-5xl', 'text-6xl']).default('text-4xl'),
-    color: z.string().default('text-gray-900'),
-    fontWeight: z.enum(['normal', 'medium', 'semibold', 'bold']).default('semibold'),
-    float: z.boolean().default(true)
-  }).default({ enabled: false, size: 'text-4xl', color: 'text-gray-900', fontWeight: 'semibold', float: true }),
+    enabled: z.boolean(),
+    size: z.enum(['text-4xl', 'text-5xl', 'text-6xl']),
+    color: z.string(),
+    fontWeight: z.enum(['normal', 'medium', 'semibold', 'bold']),
+    float: z.boolean()
+  }),
   // Animation settings
   animation: z.object({
-    enabled: z.boolean().default(true),
-    type: z.enum(['fadeIn', 'slideUp', 'slideInLeft', 'slideInRight', 'none']).default('fadeIn'),
-    duration: z.number().min(0.1).max(3).default(0.3),
-    delay: z.number().min(0).max(2).default(0.1)
-  }).default({ enabled: true, type: 'fadeIn', duration: 0.3, delay: 0.1 })
+    enabled: z.boolean(),
+    type: z.enum(['fadeIn', 'slideUp', 'slideInLeft', 'slideInRight', 'none']),
+    duration: z.number().min(0.1).max(3),
+    delay: z.number().min(0).max(2)
+  })
 });
 
 export const ImageSectionSchema = z.object({
@@ -80,9 +75,9 @@ export const ImageSectionSchema = z.object({
   caption: z.string().optional(),
   width: z.number().optional(),
   height: z.number().optional(),
-  alignment: z.enum(['left', 'center', 'right']).default('center'),
-  rounded: z.boolean().default(true),
-  shadow: z.boolean().default(true)
+  alignment: z.enum(['left', 'center', 'right']),
+  rounded: z.boolean(),
+  shadow: z.boolean()
 });
 
 export const GallerySectionSchema = z.object({
@@ -94,89 +89,80 @@ export const GallerySectionSchema = z.object({
     width: z.number().optional(),
     height: z.number().optional()
   })).min(1, 'At least one image is required'),
-  layout: z.enum(['grid', 'masonry', 'carousel', 'postcard', 'complex']).default('grid'),
-  columns: z.number().min(1).max(6).default(3),
-  spacing: z.enum(['sm', 'md', 'lg']).default('md'),
+  layout: z.enum(['grid', 'masonry', 'carousel', 'postcard', 'complex']),
+  columns: z.number().min(1).max(6),
+  spacing: z.enum(['sm', 'md', 'lg']),
   // Enhanced layout options
   responsive: z.object({
     mobile: z.object({
-      layout: z.enum(['grid', 'carousel']).default('grid'),
-      columns: z.number().min(1).max(2).default(2)
-    }).default({ layout: 'grid', columns: 2 }),
+      layout: z.enum(['grid', 'carousel']),
+      columns: z.number().min(1).max(2)
+    }),
     desktop: z.object({
-      layout: z.enum(['grid', 'masonry', 'postcard', 'complex']).default('grid'),
-      columns: z.number().min(1).max(6).default(3)
-    }).default({ layout: 'grid', columns: 3 })
-  }).default({ 
-    mobile: { layout: 'grid', columns: 2 }, 
-    desktop: { layout: 'grid', columns: 3 } 
+      layout: z.enum(['grid', 'masonry', 'postcard', 'complex']),
+      columns: z.number().min(1).max(6)
+    })
   }),
   // Hover effects and animations
   hoverEffects: z.object({
-    enabled: z.boolean().default(true),
-    scale: z.number().min(1).max(1.2).default(1.03),
-    shadow: z.boolean().default(true),
-    overlay: z.boolean().default(true)
-  }).default({ enabled: true, scale: 1.03, shadow: true, overlay: true }),
+    enabled: z.boolean(),
+    scale: z.number().min(1).max(1.2),
+    shadow: z.boolean(),
+    overlay: z.boolean()
+  }),
   // Animation settings
   animation: z.object({
-    enabled: z.boolean().default(true),
-    type: z.enum(['fadeIn', 'slideUp', 'stagger', 'none']).default('fadeIn'),
-    duration: z.number().min(0.1).max(3).default(0.5),
-    stagger: z.number().min(0).max(1).default(0.1)
-  }).default({ enabled: true, type: 'fadeIn', duration: 0.5, stagger: 0.1 })
+    enabled: z.boolean(),
+    type: z.enum(['fadeIn', 'slideUp', 'stagger', 'none']),
+    duration: z.number().min(0.1).max(3),
+    stagger: z.number().min(0).max(1)
+  })
 });
 
 export const PopularPostsSectionSchema = z.object({
   type: z.literal('popular-posts'),
-  title: z.string().default('Popular Posts'),
+  title: z.string(),
   description: z.string().optional(),
   featuredPost: z.object({
-    title: z.string().default(''),
-    excerpt: z.string().default(''),
-    imageUrl: z.string().default(''),
-    readTime: z.string().default(''),
-    publishDate: z.string().default(''),
-    category: z.string().default('')
+    title: z.string(),
+    excerpt: z.string(),
+    imageUrl: z.string(),
+    readTime: z.string(),
+    publishDate: z.string(),
+    category: z.string()
   }).optional(),
   sidePosts: z.array(z.object({
-    title: z.string().default(''),
-    excerpt: z.string().default(''),
-    imageUrl: z.string().default(''),
-    readTime: z.string().default(''),
-    publishDate: z.string().default('')
-  })).max(3).default([])
+    title: z.string(),
+    excerpt: z.string(),
+    imageUrl: z.string(),
+    readTime: z.string(),
+    publishDate: z.string()
+  })).max(3)
 });
 
 export const BreadcrumbSchema = z.object({
-  enabled: z.boolean().default(true),
+  enabled: z.boolean(),
   items: z.array(z.object({
     label: z.string(),
     href: z.string().optional()
-  })).min(1).default([
-    { label: 'Home', href: '/' },
-    { label: 'Destinations', href: '#destinations' }
-  ])
+  })).min(1)
 });
 
 // Breadcrumb section for content builder
 export const BreadcrumbSectionSchema = z.object({
   type: z.literal('breadcrumb'),
-  enabled: z.boolean().default(true),
+  enabled: z.boolean(),
   items: z.array(z.object({
     label: z.string(),
     href: z.string().optional()
-  })).min(1).default([
-    { label: 'Home', href: '/' },
-    { label: 'Destinations', href: '#destinations' }
-  ]),
+  })).min(1),
   // Styling options
   style: z.object({
-    separator: z.enum(['>', '→', '|', '/']).default('>'),
-    textSize: z.enum(['sm', 'base', 'lg']).default('sm'),
-    showHomeIcon: z.boolean().default(false),
-    color: z.enum(['gray', 'blue', 'black']).default('gray')
-  }).default({ separator: '>', textSize: 'sm', showHomeIcon: false, color: 'gray' })
+    separator: z.enum(['>', '→', '|', '/']),
+    textSize: z.enum(['sm', 'base', 'lg']),
+    showHomeIcon: z.boolean(),
+    color: z.enum(['gray', 'blue', 'black'])
+  })
 });
 
 // Content section union type
@@ -189,15 +175,41 @@ export const ContentSectionSchema = z.discriminatedUnion('type', [
   BreadcrumbSectionSchema
 ]);
 
+// Content page schema
+export const ContentPageSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
+  slug: z.string().min(1, 'Slug is required').max(100, 'Slug must be less than 100 characters'),
+  content: z.string().min(1, 'Content is required'),
+  contentSections: z.array(ContentSectionSchema),
+  status: z.enum(['draft', 'published', 'archived']),
+  seoTitle: z.string().max(60, 'SEO title must be less than 60 characters').optional(),
+  metaDescription: z.string().max(160, 'Meta description must be less than 160 characters').optional(),
+  featuredImage: z.string().optional(),
+  publishedAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+});
+
 // Base post schema for drafts
 export const PostDraftSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
   slug: z.string().min(1, 'Slug is required').max(100, 'Slug must be less than 100 characters'),
-  body: z.string().optional(),
+  body: z.string().min(50, 'Body must be at least 50 characters').optional(),
   contentSections: z.array(ContentSectionSchema).default([]),
   tags: z.array(z.string()).default([]),
   categories: z.array(z.string()).default([]),
-  featuredImage: z.string().optional(),
+  featuredImage: z.union([
+    z.string().refine((val) => {
+      return /^(https?:\/\/.+|data:image\/[a-zA-Z]+;base64,.+)$/.test(val);
+    }, 'Featured image must be a valid URL or base64 data URL'),
+    z.object({
+      url: z.string().refine((val) => {
+        return /^(https?:\/\/.+|data:image\/[a-zA-Z]+;base64,.+)$/.test(val);
+      }, 'Featured image URL must be valid'),
+      alt: z.string().optional(),
+      caption: z.string().optional()
+    })
+  ]).optional(),
   seoTitle: z.string().max(60, 'SEO title must be less than 60 characters').optional(),
   metaDescription: z.string().max(160, 'Meta description must be less than 160 characters').optional(),
   breadcrumb: BreadcrumbSchema.default({ enabled: true, items: [{ label: 'Home', href: '/' }, { label: 'Destinations', href: '#destinations' }] }),
@@ -207,7 +219,7 @@ export const PostDraftSchema = z.object({
 
 // Extended schema for publishing (requires body and tags)
 export const PostPublishSchema = PostDraftSchema.extend({
-  body: z.string().min(1, 'Body is required for publishing'),
+  body: z.string().min(50, 'Body must be at least 50 characters for publishing'),
   tags: z.array(z.string()).min(1, 'At least one tag is required for publishing'),
   status: z.enum(['review', 'scheduled', 'published']),
   scheduledAt: z.date().optional(),
@@ -362,4 +374,5 @@ export type NewsletterUpdate = z.infer<typeof NewsletterUpdateSchema>;
 export type NewsletterSearch = z.infer<typeof NewsletterSearchSchema>;
 export type ContactBulkAction = z.infer<typeof ContactBulkActionSchema>;
 export type NewsletterBulkAction = z.infer<typeof NewsletterBulkActionSchema>;
+export type ContentPage = z.infer<typeof ContentPageSchema>;
 

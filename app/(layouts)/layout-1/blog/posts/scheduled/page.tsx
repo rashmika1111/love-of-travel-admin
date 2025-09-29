@@ -431,7 +431,7 @@ export default function ScheduledPostsPage() {
                           <div className="text-sm text-muted-foreground">/{post.slug}</div>
                         </div>
                       </td>
-                      <td className="p-4">{post.author}</td>
+                      <td className="p-4">{typeof post.author === 'string' ? post.author : post.author.name || 'Unknown'}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />

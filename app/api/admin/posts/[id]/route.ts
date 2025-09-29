@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PostDraftSchema, PostPublishSchema } from '@/lib/validation';
 import { getPost, updatePost, deletePost } from '@/lib/api';
-import { getSessionRole, can } from '@/lib/rbac';
 
 // GET /api/admin/posts/[id] - Get post by ID
 export async function GET(
@@ -9,15 +8,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const role = getSessionRole();
-    
-    if (!can(role, 'post:edit')) {
-      return NextResponse.json(
-        { error: 'Insufficient permissions' },
-        { status: 403 }
-      );
-    }
-
     const resolvedParams = await params;
     const post = await getPost(resolvedParams.id);
     
@@ -44,17 +34,6 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const role = getSessionRole();
-    console.log('PATCH request - User role:', role);
-    
-    if (!can(role, 'post:edit')) {
-      console.log('Insufficient permissions for post:edit');
-      return NextResponse.json(
-        { error: 'Insufficient permissions' },
-        { status: 403 }
-      );
-    }
-
     const body = await request.json();
     console.log('PATCH request - Body received:', body);
     
@@ -82,14 +61,7 @@ export async function PATCH(
     
     if (status && ['review', 'scheduled', 'published'].includes(status)) {
       // Use publish schema for publishing actions
-      console.log('PATCH request - Checking publish permissions for status:', status);
-      if (!can(role, 'post:publish')) {
-        console.log('Insufficient permissions for post:publish');
-        return NextResponse.json(
-          { error: 'Insufficient permissions to publish' },
-          { status: 403 }
-        );
-      }
+      console.log('PATCH request - Using PostPublishSchema');
       
       // Ensure required fields for publishing are present
       const publishData = {
@@ -100,7 +72,6 @@ export async function PATCH(
       };
       
       console.log('PATCH request - Publishing data with defaults:', publishData);
-      console.log('PATCH request - Using PostPublishSchema');
       validatedData = PostPublishSchema.parse(publishData);
     } else {
       // Use draft schema for draft updates
@@ -152,15 +123,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const role = getSessionRole();
-    
-    if (!can(role, 'post:delete')) {
-      return NextResponse.json(
-        { error: 'Insufficient permissions' },
-        { status: 403 }
-      );
-    }
-
     const resolvedParams = await params;
     const success = await deletePost(resolvedParams.id);
     

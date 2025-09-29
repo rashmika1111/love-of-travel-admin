@@ -24,9 +24,21 @@ import { MediaAsset } from '@/lib/api';
 import { ContentSection, PostDraftSchema } from '@/lib/validation';
 import { useSnackbar } from '@/components/ui/snackbar';
 
-// Use the same schema as new post to include contentSections
-const EditPostFormSchema = PostDraftSchema.extend({
+// Use a very simple schema for editing
+const EditPostFormSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  slug: z.string().min(1, 'Slug is required'),
+  body: z.string().optional(),
+  contentSections: z.array(z.any()).optional(),
+  tags: z.array(z.string()).optional(),
+  categories: z.array(z.string()).optional(),
+  featuredImage: z.string().optional(),
+  seoTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
   status: z.enum(['draft', 'review', 'published']).optional(),
+  jsonLd: z.boolean().optional(),
+  breadcrumb: z.any().optional(),
+  readingTime: z.number().optional(),
 });
 
 type PostFormData = z.infer<typeof EditPostFormSchema>;
@@ -268,15 +280,17 @@ export default function EditPostPage() {
 
     setSaving(true);
     try {
-      const response = await fetch(`/api/admin/posts/${postId}`, {
+      const requestBody = {
+        ...data,
+        contentSections: contentSections,
+      };
+      
+      const response = await fetch(`http://localhost:5000/api/admin/posts/${postId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...data,
-          contentSections: contentSections,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
@@ -284,13 +298,27 @@ export default function EditPostPage() {
         showSnackbar('Post updated successfully!', 'success');
         // Add a small delay to ensure the update is processed
         setTimeout(() => {
-          // Add timestamp to force refresh
-          window.location.href = `/layout-1/blog/posts?refresh=${Date.now()}`;
+          router.push('/layout-1/blog/posts');
         }, 100);
       } else {
-        const errorData = await response.json();
-        console.error('Error updating post:', errorData.error);
-        showSnackbar('Failed to update post. Please try again.', 'error');
+        let errorMessage = 'Failed to update post. Please try again.';
+        try {
+          const errorData = await response.json();
+          console.error('Error updating post:', errorData);
+          
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (Array.isArray(errorData) && errorData.length > 0) {
+            errorMessage = errorData[0].msg || errorData[0].message || 'Validation error';
+          }
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+          errorMessage = `Server error (${response.status}). Please try again.`;
+        }
+        
+        showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
       console.error('Error updating post:', error);
@@ -767,7 +795,7 @@ export default function EditPostPage() {
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="status">Status</Label>
-                  <Select value={post?.status || 'draft'} onValueChange={(value) => setValue('status', value as any)}>
+                  <Select value={post?.status || 'draft'} onValueChange={(value) => setValue('status', value as 'draft' | 'review' | 'scheduled' | 'published')}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>

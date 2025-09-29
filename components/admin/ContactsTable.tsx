@@ -59,7 +59,7 @@ interface ContactsTableProps {
   limit: number;
   onPageChange: (page: number) => void;
   onContactSelect: (contact: Contact) => void;
-  onBulkAction: (action: string, contactIds: string[], data?: any) => void;
+  onBulkAction: (action: string, contactIds: string[], data?: { status?: string; priority?: string }) => void;
   loading?: boolean;
 }
 
@@ -419,3 +419,5 @@ export function ContactsTable({
     </Card>
   );
 }
+
+

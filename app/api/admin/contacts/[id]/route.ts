@@ -5,7 +5,7 @@ import { getSessionRole, can } from '@/lib/rbac';
 // GET /api/admin/contacts/[id] - Get single contact
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const role = getSessionRole();
@@ -17,9 +17,11 @@ export async function GET(
       );
     }
 
+    const resolvedParams = await params;
+    
     // Mock data for now - in production, this would fetch from the backend API
     const mockContact = {
-      _id: params.id,
+      _id: resolvedParams.id,
       name: 'John Doe',
       email: 'john@example.com',
       subject: 'Travel inquiry',
@@ -57,7 +59,7 @@ export async function GET(
 // PUT /api/admin/contacts/[id] - Update contact
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const role = getSessionRole();
@@ -69,12 +71,13 @@ export async function PUT(
       );
     }
 
+    const resolvedParams = await params;
     const body = await request.json();
     const validatedData = ContactUpdateSchema.parse(body);
 
     // Mock implementation - in production, this would call the backend API
     const updatedContact = {
-      _id: params.id,
+      _id: resolvedParams.id,
       name: 'John Doe',
       email: 'john@example.com',
       subject: 'Travel inquiry',
@@ -120,8 +123,8 @@ export async function PUT(
 
 // DELETE /api/admin/contacts/[id] - Delete contact
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const role = getSessionRole();
@@ -133,6 +136,8 @@ export async function DELETE(
       );
     }
 
+    const resolvedParams = await params;
+    
     // Mock implementation - in production, this would call the backend API
     return NextResponse.json({
       success: true,

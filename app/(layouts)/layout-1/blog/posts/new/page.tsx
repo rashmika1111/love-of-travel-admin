@@ -21,6 +21,7 @@ import { MediaLibrary } from '@/components/cms/MediaLibrary';
 import { MediaAsset } from '@/lib/api';
 import { ContentSection } from '@/lib/validation';
 import { useSnackbar } from '@/components/ui/snackbar';
+import { useDebouncedAutosave } from '@/hooks/useDebouncedAutosave';
 
 // Use the enhanced PostDraftSchema that includes contentSections
 type PostDraft = z.infer<typeof PostDraftSchema>;
@@ -31,7 +32,35 @@ export default function NewPostPage() {
   const { showSnackbar } = useSnackbar();
   
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [postId, setPostId] = React.useState<string | null>(null);
+  const [postId, setPostId] = React.useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('draft:new-post');
+    }
+    return null;
+  });
+  
+  // Validate postId from localStorage on mount
+  React.useEffect(() => {
+    const validatePostId = async () => {
+      if (postId) {
+        try {
+          const response = await fetch(`http://localhost:5000/api/admin/posts/${postId}`);
+          if (!response.ok) {
+            // Post doesn't exist, clear the postId
+            console.log('Post from localStorage no longer exists, clearing postId');
+            setPostId(null);
+            localStorage.removeItem('draft:new-post');
+          }
+        } catch (error) {
+          console.error('Error validating postId:', error);
+          setPostId(null);
+          localStorage.removeItem('draft:new-post');
+        }
+      }
+    };
+    
+    validatePostId();
+  }, []);
   const [showMediaLibrary, setShowMediaLibrary] = React.useState(false);
   const [selectedImage, setSelectedImage] = React.useState<MediaAsset | null>(null);
   const [contentSections, setContentSections] = React.useState<ContentSection[]>([]);
@@ -40,8 +69,6 @@ export default function NewPostPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
   const [isAutoSaving, setIsAutoSaving] = React.useState(false);
   const [lastSaved, setLastSaved] = React.useState<Date | null>(null);
-  const [autoSaveTimeout, setAutoSaveTimeout] = React.useState<NodeJS.Timeout | null>(null);
-  const [isInitialLoad, setIsInitialLoad] = React.useState(true);
 
   const form = useForm<PostDraft>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,128 +98,39 @@ export default function NewPostPage() {
   const { watch, setValue, formState: { errors } } = form;
   const watchedValues = watch();
 
-  // Auto-save for general form changes
-  React.useEffect(() => {
-    if (isInitialLoad) return; // Don't auto-save on initial load
-    
-    // Set unsaved changes flag
-    setHasUnsavedChanges(true);
-    
-    // Clear existing timeout
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout);
-    }
-    
-    // Auto-save after 2 seconds of inactivity
-    const timeoutId = setTimeout(() => {
-      autoSaveDraft();
-    }, 2000);
-    
-    setAutoSaveTimeout(timeoutId);
-    
-    // Cleanup function
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [watchedValues.title, watchedValues.slug, watchedValues.body, watchedValues.tags, watchedValues.categories, watchedValues.featuredImage, watchedValues.seoTitle, watchedValues.metaDescription, watchedValues.jsonLd, watchedValues.breadcrumb, watchedValues.readingTime, isInitialLoad]);
+  // Create draft object for autosave
+  const draft = React.useMemo(() => ({
+    ...watchedValues,
+    contentSections: contentSections,
+    status: 'review'
+  }), [watchedValues, contentSections]);
 
-  const autoSaveDraft = async () => {
-    if (isAutoSaving || !watchedValues.title) return; // Don't auto-save if no title
-    
-    setIsAutoSaving(true);
-    try {
-      const response = await fetch('/api/admin/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...watchedValues,
-          contentSections: contentSections,
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (!postId) {
-          setPostId(result.id);
-        }
-        setLastSaved(new Date());
-        setHasUnsavedChanges(false);
-      }
-    } catch (error) {
-      console.error('Auto-save failed:', error);
-    } finally {
+  // Use debounced autosave hook
+  useDebouncedAutosave({
+    draft,
+    postId,
+    setPostId,
+    delay: 3000, // Increased delay to reduce request frequency
+    onSave: (id) => {
+      setLastSaved(new Date());
+      setHasUnsavedChanges(false);
+      setIsAutoSaving(false);
+    },
+    onError: (error) => {
+      console.error('Autosave error:', error);
       setIsAutoSaving(false);
     }
-  };
+  });
 
-  // Auto-save function for content sections
-  const autoSaveContentSections = async (sections: ContentSection[]) => {
-    if (isAutoSaving || !watchedValues.title) return; // Don't auto-save if no title
-    
-    setIsAutoSaving(true);
-    try {
-      const response = await fetch('/api/admin/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...watchedValues,
-          contentSections: sections,
-        }),
-      });
 
-      if (response.ok) {
-        const result = await response.json();
-        if (!postId) {
-          setPostId(result.id);
-        }
-        setLastSaved(new Date());
-        setHasUnsavedChanges(false);
-      }
-    } catch (error) {
-      console.error('Content sections auto-save failed:', error);
-    } finally {
-      setIsAutoSaving(false);
-    }
-  };
 
   // Handle content sections changes
   const handleContentSectionsChange = (newSections: ContentSection[]) => {
     setContentSections(newSections);
     setValue('contentSections', newSections);
     setHasUnsavedChanges(true);
-    
-    // Clear existing timeout
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout);
-    }
-    
-    // Auto-save after 2 seconds of inactivity
-    const timeoutId = setTimeout(() => {
-      autoSaveContentSections(newSections);
-    }, 2000);
-    
-    setAutoSaveTimeout(timeoutId);
   };
 
-  // Cleanup timeout on unmount
-  React.useEffect(() => {
-    return () => {
-      if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-      }
-    };
-  }, [autoSaveTimeout]);
-
-  // Enable auto-save after initial load
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsInitialLoad(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
 
 
   // Auto-generate slug from title
@@ -209,64 +147,68 @@ export default function NewPostPage() {
   }, [watchedValues.title, watchedValues.slug, setValue]);
 
   const handleSaveDraft = async (data: PostDraft) => {
-    setIsSubmitting(true);
-    try {
-      const response = await fetch('/api/admin/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          contentSections: contentSections,
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setPostId(result.id);
-        setHasUnsavedChanges(false);
-        setLastSaved(new Date());
-        showSnackbar('Draft saved successfully!', 'success');
-      } else {
-        const error = await response.json();
-        console.error('Error saving draft:', error);
-        showSnackbar('Error saving draft. Please try again.', 'error');
-      }
-    } catch (error) {
-      console.error('Error saving draft:', error);
-      showSnackbar('Error saving draft. Please try again.', 'error');
-    } finally {
-      setIsSubmitting(false);
+    // Since autosave handles this automatically, just show a message
+    if (postId) {
+      showSnackbar('Draft is automatically saved!', 'info');
+    } else {
+      showSnackbar('Please wait for autosave to create a draft first', 'warning');
     }
   };
 
   const handlePublish = async (data: PostDraft) => {
+    if (!postId) {
+      showSnackbar('Please wait for autosave to create a draft first', 'warning');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const publishData = {
-        ...data,
+        title: data.title,
         body: data.body || '',
         contentSections: contentSections,
         tags: data.tags.length > 0 ? data.tags : ['untagged'],
-        status: 'review',
       };
 
-      const response = await fetch('/api/admin/posts', {
-        method: 'POST',
+      const response = await fetch(`http://localhost:5000/api/admin/posts/${postId}/publish/test`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(publishData),
       });
 
       if (response.ok) {
         const result = await response.json();
-        setPostId(result.id);
         setHasUnsavedChanges(false);
         setLastSaved(new Date());
-        showSnackbar('Post submitted for review!', 'success');
+        showSnackbar('Post published successfully!', 'success');
+        // Clear localStorage and navigate
+        localStorage.removeItem('draft:new-post');
         router.push('/layout-1/blog/posts');
       } else {
-        const error = await response.json();
-        console.error('Error publishing post:', error);
-        showSnackbar('Error publishing post. Please try again.', 'error');
+        let errorMessage = 'Unknown error occurred';
+        try {
+          const error = await response.json();
+          console.error('Error publishing post:', error);
+          
+          if (response.status === 429) {
+            errorMessage = 'Too many requests. Please wait a moment and try again.';
+          } else if (error.error) {
+            errorMessage = error.error;
+          } else if (error.message) {
+            errorMessage = error.message;
+          } else if (typeof error === 'string') {
+            errorMessage = error;
+          }
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+          if (response.status === 429) {
+            errorMessage = 'Too many requests. Please wait a moment and try again.';
+          } else {
+            errorMessage = `Server error (${response.status}). Please try again.`;
+          }
+        }
+        
+        showSnackbar(`Error publishing post: ${errorMessage}`, 'error');
       }
     } catch (error) {
       console.error('Error publishing post:', error);

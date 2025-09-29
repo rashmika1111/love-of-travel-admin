@@ -63,7 +63,7 @@ export default function NewsletterPage() {
     router.push(`/layout-1/blog/newsletter/${encodeURIComponent(subscriber.email)}`);
   };
 
-  const handleBulkAction = async (action: string, subscriberIds: string[], data?: any) => {
+  const handleBulkAction = async (action: string, subscriberIds: string[], data?: { status?: string }) => {
     try {
       const response = await fetch('/api/admin/newsletter', {
         method: 'POST',

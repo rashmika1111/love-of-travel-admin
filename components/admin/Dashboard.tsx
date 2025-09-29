@@ -395,3 +395,5 @@ export function Dashboard({ onNavigateToContacts, onNavigateToNewsletter }: Dash
     </div>
   );
 }
+
+

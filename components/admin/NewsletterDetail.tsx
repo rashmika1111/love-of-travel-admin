@@ -262,7 +262,7 @@ export function NewsletterDetail({
                       value={editedSubscriber.preferences.frequency}
                       onValueChange={(value) => setEditedSubscriber(prev => ({
                         ...prev,
-                        preferences: { ...prev.preferences, frequency: value as any }
+                        preferences: { ...prev.preferences, frequency: value as 'weekly' | 'monthly' | 'quarterly' }
                       }))}
                     >
                       <SelectTrigger>
@@ -592,3 +592,5 @@ export function NewsletterDetail({
     </div>
   );
 }
+
+

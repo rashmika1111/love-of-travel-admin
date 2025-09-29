@@ -107,10 +107,12 @@ export function ContentBuilder({ sections, onChange, className }: ContentBuilder
     const [reorderedItem] = newSections.splice(result.source.index, 1);
     newSections.splice(result.destination.index, 0, reorderedItem);
 
+    console.log('ContentBuilder: Sections reordered:', newSections);
     onChange(newSections);
   };
 
   const addSection = (type: string) => {
+    console.log('ContentBuilder: Adding new section of type:', type);
     let newSection: ContentSection;
 
     switch (type) {
@@ -228,16 +230,19 @@ export function ContentBuilder({ sections, onChange, className }: ContentBuilder
         return;
     }
 
+    console.log('ContentBuilder: New section created:', newSection);
     onChange([...sections, newSection]);
   };
 
   const updateSection = (index: number, updatedSection: ContentSection) => {
+    console.log('ContentBuilder: Updating section at index', index, ':', updatedSection);
     const newSections = [...sections];
     newSections[index] = updatedSection;
     onChange(newSections);
   };
 
   const removeSection = (index: number) => {
+    console.log('ContentBuilder: Removing section at index', index);
     const newSections = sections.filter((_, i) => i !== index);
     onChange(newSections);
   };

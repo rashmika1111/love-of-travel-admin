@@ -11,6 +11,22 @@ export type Post = PostDraft & {
   publishedAt?: Date;
 };
 
+export type ContentPage = {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  contentSections: unknown[];
+  status: 'draft' | 'published' | 'archived';
+  seoTitle?: string;
+  metaDescription?: string;
+  featuredImage?: string;
+  publishedAt?: Date;
+  updatedAt?: Date;
+  createdAt: Date;
+  lastSyncedAt?: Date;
+};
+
 export type MediaAsset = {
   id: string;
   url: string;
@@ -99,136 +115,332 @@ const mockMedia: MediaAsset[] = [
 
 // Initialize mock data after loading from persistence
 async function initializeMockData() {
-  const loadedPosts = await loadPosts();
-  const loadedMedia = await loadMediaAssets();
-  
-  // Load existing data
-  posts = loadedPosts;
-  mediaAssets = loadedMedia;
-  
-  // Only add mock data if no data exists
-  if (loadedPosts.size === 0) {
-    mockPosts.forEach(post => posts.set(post.id, post));
-    await savePosts(posts);
-  }
-  
-  if (loadedMedia.size === 0) {
-    mockMedia.forEach(asset => mediaAssets.set(asset.id, asset));
-    await saveMediaAssets(mediaAssets);
+  try {
+    console.log('Initializing mock data...');
+    
+    const loadedPosts = await loadPosts();
+    const loadedMedia = await loadMediaAssets();
+    
+    console.log('Loaded posts:', loadedPosts.size);
+    console.log('Loaded media:', loadedMedia.size);
+    
+    // Load existing data
+    posts = loadedPosts;
+    mediaAssets = loadedMedia;
+    
+    // Only add mock data if no data exists
+    if (loadedPosts.size === 0) {
+      console.log('Adding mock posts...');
+      mockPosts.forEach(post => posts.set(post.id, post));
+      await savePosts(posts);
+    }
+    
+    if (loadedMedia.size === 0) {
+      console.log('Adding mock media...');
+      mockMedia.forEach(asset => mediaAssets.set(asset.id, asset));
+      await saveMediaAssets(mediaAssets);
+    }
+    
+    console.log('Mock data initialization completed');
+  } catch (error) {
+    console.error('Error initializing mock data:', error);
+    // Initialize with empty data if loading fails
+    posts = new Map();
+    mediaAssets = new Map();
   }
 }
 
 // Track initialization state
 let isInitialized = false;
+let initError: Error | null = null;
+
 const initPromise = initializeMockData().then(() => {
   isInitialized = true;
-}).catch(console.error);
+  console.log('Data initialization completed successfully');
+}).catch((error) => {
+  console.error('Data initialization failed:', error);
+  initError = error;
+  isInitialized = true; // Mark as initialized even if failed to prevent infinite waiting
+});
 
 // Wait for initialization to complete
 async function ensureInitialized() {
   if (!isInitialized) {
     await initPromise;
   }
+  
+  if (initError) {
+    console.warn('Data initialization had errors, but continuing with empty data');
+  }
 }
 
 // Posts API
 export async function createPost(data: PostDraft): Promise<{ id: string }> {
-  await ensureInitialized();
-  const id = Math.random().toString(36).substr(2, 9);
-  const post: Post = {
-    ...data,
-    id,
-    author: 'Current User', // In real app, get from auth
-    status: 'draft',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-  
-  posts.set(id, post);
-  await savePosts(posts);
-  return { id };
+  try {
+    console.log('Admin Panel: Creating post with data:', data);
+    
+    const response = await fetch('http://localhost:5000/api/admin/posts/test', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Admin Panel: Error creating post:', errorData);
+      throw new Error(errorData.message || 'Failed to create post');
+    }
+
+    const result = await response.json();
+    console.log('Admin Panel: Post created successfully:', result);
+    return { id: result.data._id };
+  } catch (error) {
+    console.error('Admin Panel: Error creating post:', error);
+    // Fallback to mock data if backend is not available
+    await ensureInitialized();
+    const id = Math.random().toString(36).substr(2, 9);
+    const post: Post = {
+      ...data,
+      id,
+      author: 'Current User',
+      status: 'draft',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    posts.set(id, post);
+    await savePosts(posts);
+    return { id };
+  }
 }
 
 export async function getPosts(searchParams: PostSearch): Promise<{ rows: Post[]; total: number }> {
-  await ensureInitialized();
-  let filteredPosts = Array.from(posts.values());
+  try {
+    console.log('Admin Panel: Fetching posts with params:', searchParams);
+    
+    const queryParams = new URLSearchParams();
+    if (searchParams.search) queryParams.append('search', searchParams.search);
+    if (searchParams.status && searchParams.status !== 'all') queryParams.append('status', searchParams.status);
+    if (searchParams.author) queryParams.append('author', searchParams.author);
+    if (searchParams.dateFrom) queryParams.append('dateFrom', searchParams.dateFrom);
+    if (searchParams.dateTo) queryParams.append('dateTo', searchParams.dateTo);
+    queryParams.append('page', searchParams.page.toString());
+    queryParams.append('limit', searchParams.limit.toString());
+
+    const response = await fetch(`http://localhost:5000/api/admin/posts?${queryParams}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Admin Panel: Error fetching posts:', errorData);
+      throw new Error(errorData.message || 'Failed to fetch posts');
+    }
+
+    const result = await response.json();
+    console.log('Admin Panel: Posts fetched successfully:', result);
+    
+    // Transform backend data to frontend format
+    const transformedPosts = result.rows.map((post: Record<string, unknown>) => ({
+      ...post,
+      id: post._id || post.id, // Ensure we have an 'id' field
+      author: post.author ? (typeof post.author === 'string' ? post.author : `${post.author.firstName || ''} ${post.author.lastName || ''}`.trim() || post.author.email || 'Unknown') : 'Unknown',
+      createdAt: new Date(post.createdAt),
+      updatedAt: new Date(post.updatedAt),
+      publishedAt: post.publishedAt ? new Date(post.publishedAt) : undefined,
+      scheduledAt: post.scheduledAt ? new Date(post.scheduledAt) : undefined,
+    }));
+    
+    return { rows: transformedPosts, total: result.total };
+  } catch (error) {
+    console.error('Admin Panel: Error fetching posts:', error);
+    // Fallback to mock data if backend is not available
+    await ensureInitialized();
+    let filteredPosts = Array.from(posts.values());
   
-  // Apply filters
-  if (searchParams.search) {
-    const search = searchParams.search.toLowerCase();
-    filteredPosts = filteredPosts.filter(post => 
-      post.title.toLowerCase().includes(search) ||
-      post.body?.toLowerCase().includes(search) ||
-      post.tags.some(tag => tag.toLowerCase().includes(search))
-    );
+    // Apply filters
+    if (searchParams.search) {
+      const search = searchParams.search.toLowerCase();
+      filteredPosts = filteredPosts.filter(post => 
+        post.title.toLowerCase().includes(search) ||
+        post.body?.toLowerCase().includes(search) ||
+        post.tags.some(tag => tag.toLowerCase().includes(search))
+      );
+    }
+    
+    if (searchParams.status !== 'all') {
+      filteredPosts = filteredPosts.filter(post => post.status === searchParams.status);
+    }
+    
+    if (searchParams.author) {
+      filteredPosts = filteredPosts.filter(post =>
+        post.author.toLowerCase().includes(searchParams.author!.toLowerCase())
+      );
+    }
+    
+    if (searchParams.dateFrom) {
+      const fromDate = new Date(searchParams.dateFrom);
+      filteredPosts = filteredPosts.filter(post => post.createdAt >= fromDate);
+    }
+    
+    if (searchParams.dateTo) {
+      const toDate = new Date(searchParams.dateTo);
+      filteredPosts = filteredPosts.filter(post => post.createdAt <= toDate);
+    }
+    
+    // Sort by updated date (newest first)
+    filteredPosts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    
+    // Pagination
+    const total = filteredPosts.length;
+    const start = (searchParams.page - 1) * searchParams.limit;
+    const end = start + searchParams.limit;
+    const rows = filteredPosts.slice(start, end);
+    
+    return { rows, total };
   }
-  
-  if (searchParams.status !== 'all') {
-    filteredPosts = filteredPosts.filter(post => post.status === searchParams.status);
-  }
-  
-  if (searchParams.author) {
-    filteredPosts = filteredPosts.filter(post =>
-      post.author.toLowerCase().includes(searchParams.author!.toLowerCase())
-    );
-  }
-  
-  if (searchParams.dateFrom) {
-    const fromDate = new Date(searchParams.dateFrom);
-    filteredPosts = filteredPosts.filter(post => post.createdAt >= fromDate);
-  }
-  
-  if (searchParams.dateTo) {
-    const toDate = new Date(searchParams.dateTo);
-    filteredPosts = filteredPosts.filter(post => post.createdAt <= toDate);
-  }
-  
-  // Sort by updated date (newest first)
-  filteredPosts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-  
-  // Pagination
-  const total = filteredPosts.length;
-  const start = (searchParams.page - 1) * searchParams.limit;
-  const end = start + searchParams.limit;
-  const rows = filteredPosts.slice(start, end);
-  
-  return { rows, total };
 }
 
 export async function getPost(id: string): Promise<Post | null> {
-  await ensureInitialized();
-  return posts.get(id) || null;
+  try {
+    console.log('Admin Panel: Fetching post with ID:', id, 'Type:', typeof id);
+    
+    // Use the direct GET single post endpoint
+    const response = await fetch(`http://localhost:5000/api/admin/posts/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log('Admin Panel: Post not found');
+        return null;
+      }
+      const errorData = await response.json();
+      console.error('Admin Panel: Error fetching post:', errorData);
+      throw new Error(errorData.message || 'Failed to fetch post');
+    }
+
+    const result = await response.json();
+    console.log('Admin Panel: Post fetched successfully:', result);
+    
+    if (result.success && result.data) {
+      // Transform backend data to frontend format
+      const post = result.data;
+      const transformedPost = {
+        ...post,
+        id: post._id || post.id,
+        author: post.author ? (typeof post.author === 'string' ? post.author : `${post.author.firstName || ''} ${post.author.lastName || ''}`.trim() || post.author.email || 'Unknown') : 'Unknown',
+        createdAt: new Date(post.createdAt),
+        updatedAt: new Date(post.updatedAt),
+        publishedAt: post.publishedAt ? new Date(post.publishedAt) : undefined,
+        scheduledAt: post.scheduledAt ? new Date(post.scheduledAt) : undefined,
+      };
+      console.log('Admin Panel: Post transformed:', transformedPost);
+      return transformedPost;
+    }
+    
+    console.log('Admin Panel: Post not found in response');
+    return null;
+  } catch (error) {
+    console.error('Admin Panel: Error fetching post:', error);
+    // Fallback to mock data if backend is not available
+    await ensureInitialized();
+    return posts.get(id) || null;
+  }
 }
 
 export async function updatePost(id: string, data: Partial<PostPublish>): Promise<Post | null> {
-  await ensureInitialized();
-  const existing = posts.get(id);
-  if (!existing) return null;
-  
-  console.log('updatePost - data received:', data);
-  console.log('updatePost - featuredImage:', data.featuredImage);
-  
-  const updated: Post = {
-    ...existing,
-    ...data,
-    updatedAt: new Date(),
-  };
-  
-  console.log('updatePost - updated post:', updated);
-  console.log('updatePost - updated featuredImage:', updated.featuredImage);
-  
-  posts.set(id, updated);
-  await savePosts(posts);
-  return updated;
+  try {
+    console.log('Admin Panel: Updating post with ID:', id, 'data:', data);
+    
+    const response = await fetch(`http://localhost:5000/api/admin/posts/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Admin Panel: Error updating post:', errorData);
+      throw new Error(errorData.message || 'Failed to update post');
+    }
+
+    const result = await response.json();
+    console.log('Admin Panel: Post updated successfully:', result);
+    
+    if (result.success && result.data) {
+      // Transform backend data to frontend format
+      const post = {
+        ...result.data,
+        id: result.data._id || result.data.id,
+        createdAt: new Date(result.data.createdAt),
+        updatedAt: new Date(result.data.updatedAt),
+        publishedAt: result.data.publishedAt ? new Date(result.data.publishedAt) : undefined,
+        scheduledAt: result.data.scheduledAt ? new Date(result.data.scheduledAt) : undefined,
+      };
+      return post;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Admin Panel: Error updating post:', error);
+    // Fallback to mock data if backend is not available
+    await ensureInitialized();
+    const existing = posts.get(id);
+    if (!existing) return null;
+    
+    const updated: Post = {
+      ...existing,
+      ...data,
+      updatedAt: new Date(),
+    };
+    
+    posts.set(id, updated);
+    await savePosts(posts);
+    return updated;
+  }
 }
 
 export async function deletePost(id: string): Promise<boolean> {
-  await ensureInitialized();
-  const deleted = posts.delete(id);
-  if (deleted) {
-    await savePosts(posts);
+  try {
+    console.log('Admin Panel: Deleting post with ID:', id);
+    
+    const response = await fetch(`http://localhost:5000/api/admin/posts/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Admin Panel: Error deleting post:', errorData);
+      throw new Error(errorData.message || 'Failed to delete post');
+    }
+
+    const result = await response.json();
+    console.log('Admin Panel: Post deleted successfully:', result);
+    return result.success || true;
+  } catch (error) {
+    console.error('Admin Panel: Error deleting post:', error);
+    // Fallback to mock data if backend is not available
+    await ensureInitialized();
+    const deleted = posts.delete(id);
+    if (deleted) {
+      await savePosts(posts);
+    }
+    return deleted;
   }
-  return deleted;
 }
 
 export async function bulkUpdatePosts(action: BulkAction): Promise<{ success: number; failed: number }> {
