@@ -249,7 +249,7 @@ export async function getPosts(searchParams: PostSearch): Promise<{ rows: Post[]
     const transformedPosts = result.rows.map((post: Record<string, unknown>) => ({
       ...post,
       id: post._id || post.id, // Ensure we have an 'id' field
-      author: post.author ? (typeof post.author === 'string' ? post.author : `${post.author.firstName || ''} ${post.author.lastName || ''}`.trim() || post.author.email || 'Unknown') : 'Unknown',
+      author: post.author ? (typeof post.author === 'string' ? post.author : `${(post.author as any).firstName || ''} ${(post.author as any).lastName || ''}`.trim() || (post.author as any).email || 'Unknown') : 'Unknown',
       createdAt: new Date(post.createdAt),
       updatedAt: new Date(post.updatedAt),
       publishedAt: post.publishedAt ? new Date(post.publishedAt) : undefined,
@@ -337,7 +337,7 @@ export async function getPost(id: string): Promise<Post | null> {
       const transformedPost = {
         ...post,
         id: post._id || post.id,
-        author: post.author ? (typeof post.author === 'string' ? post.author : `${post.author.firstName || ''} ${post.author.lastName || ''}`.trim() || post.author.email || 'Unknown') : 'Unknown',
+        author: post.author ? (typeof post.author === 'string' ? post.author : `${(post.author as any).firstName || ''} ${(post.author as any).lastName || ''}`.trim() || (post.author as any).email || 'Unknown') : 'Unknown',
         createdAt: new Date(post.createdAt),
         updatedAt: new Date(post.updatedAt),
         publishedAt: post.publishedAt ? new Date(post.publishedAt) : undefined,

@@ -91,7 +91,7 @@ export function Dashboard({ onNavigateToContacts, onNavigateToNewsletter }: Dash
     switch (status) {
       case 'new':
       case 'active':
-        return 'default';
+        return 'primary';
       case 'read':
         return 'secondary';
       case 'replied':
@@ -103,7 +103,7 @@ export function Dashboard({ onNavigateToContacts, onNavigateToNewsletter }: Dash
       case 'complained':
         return 'destructive';
       default:
-        return 'default';
+        return 'secondary';
     }
   };
 
@@ -112,13 +112,13 @@ export function Dashboard({ onNavigateToContacts, onNavigateToNewsletter }: Dash
       case 'low':
         return 'secondary';
       case 'medium':
-        return 'default';
+        return 'primary';
       case 'high':
         return 'destructive';
       case 'urgent':
         return 'destructive';
       default:
-        return 'default';
+        return 'secondary';
     }
   };
 

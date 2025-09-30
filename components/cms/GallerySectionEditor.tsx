@@ -317,7 +317,7 @@ export function GallerySectionEditor({ section, onChange, onClose }: GallerySect
         onSelect={(asset) => {
           // Store the full URL for immediate display, but this could cause performance issues
           // TODO: Implement a better solution that doesn't store large data URLs in state
-          addImage(asset.url, asset.altText);
+          addImage(asset.url, (asset as { altText?: string }).altText || '');
           setShowMediaLibrary(false);
         }}
       />

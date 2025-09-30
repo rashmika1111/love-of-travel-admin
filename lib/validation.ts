@@ -259,7 +259,7 @@ export const PostSearchSchema = z.object({
 export const BulkActionSchema = z.object({
   action: z.enum(['changeStatus', 'delete']),
   postIds: z.array(z.string()).min(1, 'Select at least one post'),
-  status: z.enum(['draft', 'review', 'published']).optional(),
+  status: z.enum(['draft', 'review', 'scheduled', 'published']).optional(),
 });
 
 export type PostDraft = z.infer<typeof PostDraftSchema>;

@@ -37,12 +37,12 @@ export function useDebouncedAutosave<T extends object>({
         if (!postId) {
           // Create new post - only send fields the backend expects
           const backendDraft = {
-            title: draft.title || '',
-            body: draft.body || '',
-            tags: draft.tags || [],
-            categories: draft.categories || [],
-            featuredImage: draft.featuredImage || '',
-            contentSections: draft.contentSections || [],
+            title: (draft as any).title || '',
+            body: (draft as any).body || '',
+            tags: (draft as any).tags || [],
+            categories: (draft as any).categories || [],
+            featuredImage: (draft as any).featuredImage || '',
+            contentSections: (draft as any).contentSections || [],
             status: 'review'
           };
           
@@ -61,12 +61,12 @@ export function useDebouncedAutosave<T extends object>({
         } else {
           // Update existing post - only send fields the backend expects
           const backendDraft = {
-            title: draft.title || '',
-            body: draft.body || '',
-            tags: draft.tags || [],
-            categories: draft.categories || [],
-            featuredImage: draft.featuredImage || '',
-            contentSections: draft.contentSections || [],
+            title: (draft as any).title || '',
+            body: (draft as any).body || '',
+            tags: (draft as any).tags || [],
+            categories: (draft as any).categories || [],
+            featuredImage: (draft as any).featuredImage || '',
+            contentSections: (draft as any).contentSections || [],
             status: 'review'
           };
           

@@ -122,7 +122,7 @@ export default async function PreviewPostPage({ params }: PreviewPostPageProps) 
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <User className="h-4 w-4" />
-                  <span>By {typeof post.author === 'string' ? post.author : post.author.name}</span>
+                  <span>By {typeof post.author === 'string' ? post.author : (post.author as { name?: string })?.name}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
@@ -196,7 +196,7 @@ export default async function PreviewPostPage({ params }: PreviewPostPageProps) 
                     <div className="flex flex-wrap gap-3">
                       {post.categories.map((category, index) => (
                         <Badge key={index} variant="outline" className="text-sm px-3 py-1">
-                          {typeof category === 'string' ? category : category.name}
+                          {typeof category === 'string' ? category : (category as { name?: string })?.name}
                         </Badge>
                       ))}
                     </div>

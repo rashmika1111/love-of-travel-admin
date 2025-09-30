@@ -104,7 +104,7 @@ export async function PATCH(
         { 
           error: 'Validation failed', 
           details: error.message,
-          validationErrors: error.issues || []
+          validationErrors: (error as { issues?: unknown[] }).issues || []
         },
         { status: 400 }
       );

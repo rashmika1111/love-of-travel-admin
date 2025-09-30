@@ -45,10 +45,10 @@ export function ConfirmationDialog({
       case 'danger':
         return 'destructive';
       case 'warning':
-        return 'default';
+        return 'primary';
       case 'info':
       default:
-        return 'default';
+        return 'primary';
     }
   };
 

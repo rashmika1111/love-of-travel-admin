@@ -112,7 +112,7 @@ const getPriorityIcon = (priority: string) => {
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case 'new':
-      return 'default';
+      return 'primary';
     case 'read':
       return 'secondary';
     case 'replied':
@@ -120,7 +120,7 @@ const getStatusBadgeVariant = (status: string) => {
     case 'archived':
       return 'destructive';
     default:
-      return 'default';
+      return 'secondary';
   }
 };
 
@@ -129,13 +129,13 @@ const getPriorityBadgeVariant = (priority: string) => {
     case 'low':
       return 'secondary';
     case 'medium':
-      return 'default';
+      return 'primary';
     case 'high':
       return 'destructive';
     case 'urgent':
       return 'destructive';
     default:
-      return 'default';
+      return 'secondary';
   }
 };
 

@@ -555,8 +555,8 @@ export function ContentBuilder({ sections, onChange, className }: ContentBuilder
     return (
       <div className={cn(
         'grid p-4 border rounded-lg',
-        gridClasses[section.columns],
-        spacingClasses[section.spacing]
+        gridClasses[section.columns as keyof typeof gridClasses],
+        spacingClasses[section.spacing as keyof typeof spacingClasses]
       )}>
         {section.images.slice(0, 6).map((image, imgIndex) => (
           <div key={imgIndex} className="relative group">

@@ -110,7 +110,7 @@ const getStatusIcon = (status: string) => {
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case 'active':
-      return 'default';
+      return 'primary';
     case 'unsubscribed':
       return 'secondary';
     case 'bounced':
@@ -118,14 +118,14 @@ const getStatusBadgeVariant = (status: string) => {
     case 'complained':
       return 'destructive';
     default:
-      return 'default';
+      return 'secondary';
   }
 };
 
 const getSourceBadgeVariant = (source: string) => {
   switch (source) {
     case 'website':
-      return 'default';
+      return 'primary';
     case 'popup':
       return 'secondary';
     case 'footer':
@@ -135,7 +135,7 @@ const getSourceBadgeVariant = (source: string) => {
     case 'import':
       return 'secondary';
     default:
-      return 'default';
+      return 'secondary';
   }
 };
 

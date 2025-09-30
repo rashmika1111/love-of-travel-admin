@@ -80,11 +80,6 @@ export function TextSectionEditor({ section, onChange, onClose }: TextSectionEdi
   const updateDropCap = (updates: Partial<TextSection['dropCap']>) => {
     updateSection({
       dropCap: { 
-        enabled: false,
-        size: 'text-4xl',
-        color: 'text-gray-900',
-        fontWeight: 'semibold',
-        float: true,
         ...section.dropCap, 
         ...updates 
       }

@@ -106,7 +106,7 @@ export default function PostsPage() {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedPosts(checked && posts ? posts.map(post => post.id || post._id) : []);
+    setSelectedPosts(checked && posts ? posts.map(post => post.id) : []);
   };
 
   const handleDeletePost = async (postId: string) => {
@@ -421,7 +421,7 @@ export default function PostsPage() {
                 <Select
                   value=""
                   onValueChange={(value) => {
-                    if (value === 'draft' || value === 'review' || value === 'published') {
+                    if (value === 'draft' || value === 'review' || value === 'scheduled' || value === 'published') {
                       handleBulkAction('changeStatus', value);
                     } else if (value === 'uploadToMain') {
                       handleBulkAction('uploadToMain');
@@ -434,6 +434,7 @@ export default function PostsPage() {
                   <SelectContent>
                     <SelectItem value="draft">Change to Draft</SelectItem>
                     <SelectItem value="review">Change to Review</SelectItem>
+                    <SelectItem value="scheduled">Change to Scheduled</SelectItem>
                     <SelectItem value="published">Change to Published</SelectItem>
                     <SelectItem value="uploadToMain">Upload to Main Website</SelectItem>
                   </SelectContent>
@@ -504,12 +505,12 @@ export default function PostsPage() {
                 </thead>
                 <tbody>
                   {posts && posts.map((post, index) => (
-                    <tr key={post.id || post._id || `post-${index}`} className="border-b hover:bg-muted/50">
+                    <tr key={post.id || `post-${index}`} className="border-b hover:bg-muted/50">
                       <td className="p-4">
                         <input
                           type="checkbox"
-                          checked={selectedPosts.includes(post.id || post._id)}
-                          onChange={(e) => handleSelectPost(post.id || post._id, e.target.checked)}
+                          checked={selectedPosts.includes(post.id)}
+                          onChange={(e) => handleSelectPost(post.id, e.target.checked)}
                           className="rounded border-input"
                         />
                       </td>
@@ -517,7 +518,7 @@ export default function PostsPage() {
                         {post.featuredImage ? (
                           <div className="w-16 h-12 rounded-md overflow-hidden bg-muted">
                             <img
-                              src={post.featuredImage}
+                              src={typeof post.featuredImage === 'string' ? post.featuredImage : post.featuredImage?.url || ''}
                               alt={post.title}
                               className="w-full h-full object-cover"
                               onError={(e) => {
@@ -544,7 +545,7 @@ export default function PostsPage() {
                       <td className="p-4">
                         {getStatusBadge(post.status)}
                       </td>
-                      <td className="p-4 text-sm">{typeof post.author === 'string' ? post.author : post.author.name}</td>
+                      <td className="p-4 text-sm">{typeof post.author === 'string' ? post.author : (post.author as { name?: string })?.name}</td>
                       <td className="p-4 text-sm text-muted-foreground">
                         {formatDate(post.updatedAt)}
                       </td>
@@ -568,7 +569,7 @@ export default function PostsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(`/layout-1/blog/posts/${String(post.id || post._id)}/edit`, '_blank')}
+                            onClick={() => window.open(`/layout-1/blog/posts/${String(post.id)}/edit`, '_blank')}
                             title="Edit post"
                           >
                             <Edit className="h-4 w-4" />
@@ -577,7 +578,7 @@ export default function PostsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(`/preview/post/${String(post.id || post._id)}`, '_blank')}
+                            onClick={() => window.open(`/preview/post/${String(post.id)}`, '_blank')}
                             title="Preview post"
                           >
                             <Eye className="h-4 w-4" />
@@ -586,8 +587,8 @@ export default function PostsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleUploadToMain(post.id || post._id)}
-                              disabled={isUploading && uploadingPostId === (post.id || post._id)}
+                              onClick={() => handleUploadToMain(post.id)}
+                              disabled={isUploading && uploadingPostId === post.id}
                               title="Upload to main website"
                             >
                               <Upload className="h-4 w-4" />
@@ -598,7 +599,7 @@ export default function PostsPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                setDeletePostId(post.id || post._id);
+                                setDeletePostId(post.id);
                                 setShowDeleteModal(true);
                               }}
                               title="Delete post"

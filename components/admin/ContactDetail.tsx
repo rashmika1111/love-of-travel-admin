@@ -329,7 +329,7 @@ export function ContactDetail({
           </Card>
 
           {/* UTM Parameters */}
-          {(contact.metadata.utm_source || contact.metadata.utm_medium || contact.metadata.utm_campaign) && (
+          {(contact.metadata.utm_source || contact.metadata.utm_medium || contact.metadata.campaign) && (
             <Card>
               <CardHeader>
                 <CardTitle>UTM Parameters</CardTitle>
@@ -347,10 +347,10 @@ export function ContactDetail({
                     <p className="text-sm text-muted-foreground">{contact.metadata.utm_medium}</p>
                   </div>
                 )}
-                {contact.metadata.utm_campaign && (
+                {contact.metadata.campaign && (
                   <div>
                     <p className="text-sm font-medium">Campaign</p>
-                    <p className="text-sm text-muted-foreground">{contact.metadata.utm_campaign}</p>
+                    <p className="text-sm text-muted-foreground">{contact.metadata.campaign}</p>
                   </div>
                 )}
                 {contact.metadata.utm_term && (

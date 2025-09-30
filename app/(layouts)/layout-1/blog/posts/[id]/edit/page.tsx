@@ -35,7 +35,7 @@ const EditPostFormSchema = z.object({
   featuredImage: z.string().optional(),
   seoTitle: z.string().optional(),
   metaDescription: z.string().optional(),
-  status: z.enum(['draft', 'review', 'published']).optional(),
+  status: z.enum(['draft', 'review', 'scheduled', 'published']).optional(),
   jsonLd: z.boolean().optional(),
   breadcrumb: z.any().optional(),
   readingTime: z.number().optional(),
@@ -498,7 +498,7 @@ export default function EditPostPage() {
                   <Label htmlFor="status">Status</Label>
                   <Select 
                     defaultValue={post.status} 
-                    onValueChange={(value) => setValue('status', value as 'draft' | 'review' | 'published')}
+                    onValueChange={(value) => setValue('status', value as 'draft' | 'review' | 'scheduled' | 'published')}
                     disabled={!canPublish}
                   >
                     <SelectTrigger className="w-32">
@@ -509,6 +509,7 @@ export default function EditPostPage() {
                       {canPublish && (
                         <>
                           <SelectItem value="review">Review</SelectItem>
+                          <SelectItem value="scheduled">Scheduled</SelectItem>
                           <SelectItem value="published">Published</SelectItem>
                         </>
                       )}
@@ -802,6 +803,7 @@ export default function EditPostPage() {
                     <SelectContent>
                       <SelectItem value="draft">Draft</SelectItem>
                       <SelectItem value="review">Review</SelectItem>
+                      <SelectItem value="scheduled">Scheduled</SelectItem>
                       <SelectItem value="published">Published</SelectItem>
                     </SelectContent>
                   </Select>
