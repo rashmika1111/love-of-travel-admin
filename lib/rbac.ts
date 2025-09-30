@@ -7,8 +7,16 @@ export type Action =
   | 'post:delete'
   | 'post:review'
   | 'post:schedule'
+  | 'media:view'
   | 'media:upload'
-  | 'media:delete';
+  | 'media:delete'
+  | 'stats:view'
+  | 'contact:view'
+  | 'contact:edit'
+  | 'contact:delete'
+  | 'newsletter:view'
+  | 'newsletter:edit'
+  | 'newsletter:delete';
 
 /**
  * Mock session role - in real app this would come from auth context
@@ -32,21 +40,42 @@ export function can(userRole: UserRole, action: Action): boolean {
       'post:delete',
       'post:review',
       'post:schedule',
+      'media:view',
       'media:upload',
-      'media:delete'
+      'media:delete',
+      'media:delete',
+      'stats:view',
+      'contact:view',
+      'contact:edit',
+      'contact:delete',
+      'newsletter:view',
+      'newsletter:edit',
+      'newsletter:delete'
     ],
     editor: [
       'post:create',
       'post:edit',
-      'post:publish', 
+      'post:publish',
+      'post:delete',
       'post:review',
       'post:schedule',
-      'media:upload'
+      'media:view',
+      'media:upload',
+      'media:delete',
+      'stats:view',
+      'contact:view',
+      'contact:edit',
+      'newsletter:view',
+      'newsletter:edit'
     ],
     contributor: [
       'post:create',
       'post:edit',
-      'media:upload'
+      'media:view',
+      'media:upload',
+      'media:delete',
+      'contact:view',
+      'newsletter:view'
     ]
   };
 
@@ -66,21 +95,42 @@ export function getCurrentUserPermissions(): Action[] {
       'post:delete',
       'post:review',
       'post:schedule',
+      'media:view',
       'media:upload',
-      'media:delete'
+      'media:delete',
+      'media:delete',
+      'stats:view',
+      'contact:view',
+      'contact:edit',
+      'contact:delete',
+      'newsletter:view',
+      'newsletter:edit',
+      'newsletter:delete'
     ],
     editor: [
       'post:create',
       'post:edit',
-      'post:publish', 
+      'post:publish',
+      'post:delete',
       'post:review',
       'post:schedule',
-      'media:upload'
+      'media:view',
+      'media:upload',
+      'media:delete',
+      'stats:view',
+      'contact:view',
+      'contact:edit',
+      'newsletter:view',
+      'newsletter:edit'
     ],
     contributor: [
       'post:create',
       'post:edit',
-      'media:upload'
+      'media:view',
+      'media:upload',
+      'media:delete',
+      'contact:view',
+      'newsletter:view'
     ]
   };
 

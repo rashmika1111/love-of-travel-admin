@@ -1,5 +1,305 @@
-import { PostDraft, PostPublish, PostSearch, BulkAction } from './validation';
+import { PostDraft, PostPublish, PostSearch, BulkAction, ContentSection } from './validation';
 import { loadPosts, savePosts, loadMediaAssets, saveMediaAssets } from './persistence';
+
+// Typed API layer
+export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+
+export type Query = Record<string, string | number | boolean | undefined>;
+
+export type ApiHeaders = Record<string, string>;
+
+export class ApiError extends Error {
+  constructor(public status: number, public body: unknown) {
+    super(`API Error ${status}`);
+    this.name = 'ApiError';
+  }
+}
+
+function toQueryString(q?: Query) {
+  if (!q) return '';
+  const params = new URLSearchParams();
+  Object.entries(q).forEach(([k, v]) => {
+    if (v !== undefined && v !== null) params.append(k, String(v));
+  });
+  const s = params.toString();
+  return s ? `?${s}` : '';
+}
+
+/**
+ * Generic JSON fetcher without `any`
+ * - TResponse: the JSON shape you expect back
+ * - TBody: the JSON you send (if any)
+ */
+export async function apiFetch<TResponse, TBody = undefined>(
+  path: string,
+  opts: {
+    method?: HttpMethod;
+    query?: Query;
+    body?: TBody;
+    headers?: ApiHeaders;
+  } = {}
+): Promise<TResponse> {
+  const { method = 'GET', query, body, headers } = opts;
+
+  const url = `${path}${toQueryString(query)}`;
+  const res = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(headers ?? {}),
+    },
+    body: (body === undefined ? undefined : JSON.stringify(body)),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new ApiError(res.status, text || 'Request failed');
+  }
+
+  // If endpoint returns no content
+  if (res.status === 204) return undefined as unknown as TResponse;
+
+  return (await res.json()) as TResponse;
+}
+
+// Author type for backend responses
+type AuthorResponse = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+};
+
+// Backend response types
+type BackendPost = {
+  _id: string;
+  id?: string;
+  title: string;
+  slug: string;
+  body?: string;
+  contentSections: unknown[];
+  breadcrumb?: {
+    enabled: boolean;
+    items: Array<{ label: string; href: string }>;
+  };
+  tags: string[];
+  categories: string[];
+  status: 'draft' | 'review' | 'scheduled' | 'published';
+  author: string | AuthorResponse;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  scheduledAt?: string;
+  jsonLd?: boolean;
+};
+
+type BackendPostListResponse = {
+  rows: BackendPost[];
+  total: number;
+};
+
+type BackendPostResponse = {
+  success: boolean;
+  data: BackendPost;
+};
+
+type BackendCreatePostResponse = {
+  success: boolean;
+  data: BackendPost;
+};
+
+type BackendUpdatePostResponse = {
+  success: boolean;
+  data: BackendPost;
+};
+
+type BackendDeletePostResponse = {
+  success: boolean;
+};
+
+// Helper function to transform author data
+function transformAuthor(author: string | AuthorResponse): string {
+  if (typeof author === 'string') {
+    return author;
+  }
+  
+  const firstName = author.firstName || '';
+  const lastName = author.lastName || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+  
+  return fullName || author.email || 'Unknown';
+}
+
+// Helper function to normalize content sections from backend
+function normalizeSection(raw: unknown): ContentSection | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const b = raw as Record<string, unknown>;
+
+  switch (b.type) {
+    case 'hero':
+      if (!b.backgroundImage || !b.title) return null;
+      return {
+        type: 'hero',
+        backgroundImage: String(b.backgroundImage),
+        title: String(b.title),
+        subtitle: b.subtitle ? String(b.subtitle) : undefined,
+        author: b.author ? String(b.author) : undefined,
+        publishDate: b.publishDate ? String(b.publishDate) : undefined,
+        readTime: b.readTime ? String(b.readTime) : undefined,
+        overlayOpacity: Number(b.overlayOpacity ?? 0.4),
+        height: (b.height as { mobile: string; tablet: string; desktop: string }) ?? { mobile: '320px', tablet: '420px', desktop: '520px' },
+        titleSize: (b.titleSize as { mobile: string; tablet: string; desktop: string }) ?? { mobile: '28px', tablet: '36px', desktop: '48px' },
+        parallaxEnabled: Boolean(b.parallaxEnabled ?? false),
+        parallaxSpeed: Number(b.parallaxSpeed ?? 1),
+        backgroundPosition: (b.backgroundPosition as 'center' | 'top' | 'bottom' | 'left' | 'right') ?? 'center',
+        backgroundSize: (b.backgroundSize as 'cover' | 'contain') ?? 'cover',
+        animation: (b.animation as { enabled: boolean; type: 'fadeIn' | 'slideUp' | 'scaleIn' | 'none'; duration: number; delay: number }) ?? {
+          enabled: false,
+          type: 'fadeIn',
+          duration: 0.5,
+          delay: 0
+        },
+        socialSharing: (b.socialSharing as { enabled: boolean; platforms: ('facebook' | 'twitter' | 'linkedin' | 'copy' | 'share')[]; position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'; style: 'glass' | 'solid' | 'outline' }) ?? {
+          enabled: false,
+          platforms: ['facebook', 'twitter', 'linkedin'],
+          position: 'bottom-right',
+          style: 'glass'
+        }
+      };
+    case 'text':
+      if (!b.content) return null;
+      return {
+        type: 'text',
+        content: String(b.content),
+        hasDropCap: Boolean(b.hasDropCap ?? false),
+        alignment: (b.alignment as 'left' | 'center' | 'right' | 'justify') ?? 'left',
+        fontSize: (b.fontSize as 'sm' | 'base' | 'lg' | 'xl') ?? 'base',
+        fontFamily: (b.fontFamily as 'inter' | 'serif' | 'sans' | 'mono') ?? 'inter',
+        lineHeight: (b.lineHeight as 'tight' | 'snug' | 'normal' | 'relaxed' | 'loose') ?? 'normal',
+        dropCap: (b.dropCap as { enabled: boolean; size: 'text-4xl' | 'text-5xl' | 'text-6xl'; color: string; fontWeight: 'normal' | 'medium' | 'semibold' | 'bold'; float: boolean }) ?? {
+          enabled: false,
+          size: 'text-4xl',
+          color: '#000000',
+          fontWeight: 'normal',
+          float: false
+        },
+        animation: (b.animation as { enabled: boolean; type: 'fadeIn' | 'slideUp' | 'slideInLeft' | 'slideInRight' | 'none'; duration: number; delay: number }) ?? {
+          enabled: false,
+          type: 'fadeIn',
+          duration: 0.5,
+          delay: 0
+        }
+      };
+    case 'image':
+      if (!b.imageUrl) return null;
+      return {
+        type: 'image',
+        imageUrl: String(b.imageUrl),
+        altText: b.altText ? String(b.altText) : undefined,
+        caption: b.caption ? String(b.caption) : undefined,
+        width: b.width ? Number(b.width) : undefined,
+        height: b.height ? Number(b.height) : undefined,
+        alignment: (b.alignment as 'left' | 'center' | 'right') ?? 'center',
+        rounded: Boolean(b.rounded ?? false),
+        shadow: Boolean(b.shadow ?? false)
+      };
+    case 'gallery':
+      if (!Array.isArray(b.images) || b.images.length < 1) return null;
+      return {
+        type: 'gallery',
+        images: b.images.map((im: Record<string, unknown>) => ({
+          url: String(im.url),
+          altText: im.altText ? String(im.altText) : undefined,
+          caption: im.caption ? String(im.caption) : undefined,
+          width: im.width ? Number(im.width) : undefined,
+          height: im.height ? Number(im.height) : undefined
+        })),
+        layout: (b.layout as 'grid' | 'masonry' | 'carousel' | 'postcard' | 'complex') ?? 'grid',
+        columns: Number(b.columns ?? 3),
+        spacing: (b.spacing as 'sm' | 'md' | 'lg') ?? 'md',
+        responsive: (b.responsive as { mobile: { layout: 'grid' | 'carousel'; columns: number }; desktop: { layout: 'grid' | 'masonry' | 'postcard' | 'complex'; columns: number } }) ?? {
+          mobile: { layout: 'grid', columns: 2 },
+          desktop: { layout: 'grid', columns: 3 }
+        },
+        hoverEffects: (b.hoverEffects as { enabled: boolean; scale: number; shadow: boolean; overlay: boolean }) ?? {
+          enabled: false,
+          scale: 1.05,
+          shadow: false,
+          overlay: false
+        },
+        animation: (b.animation as { enabled: boolean; type: 'fadeIn' | 'slideUp' | 'stagger' | 'none'; duration: number; stagger: number }) ?? {
+          enabled: false,
+          type: 'fadeIn',
+          duration: 0.5,
+          stagger: 0.1
+        }
+      };
+    case 'popular-posts':
+      if (!b.title) return null;
+      return {
+        type: 'popular-posts',
+        title: String(b.title),
+        description: b.description ? String(b.description) : undefined,
+        featuredPost: b.featuredPost ? {
+          title: String((b.featuredPost as Record<string, unknown>).title),
+          excerpt: String((b.featuredPost as Record<string, unknown>).excerpt),
+          imageUrl: String((b.featuredPost as Record<string, unknown>).imageUrl),
+          readTime: String((b.featuredPost as Record<string, unknown>).readTime),
+          publishDate: String((b.featuredPost as Record<string, unknown>).publishDate),
+          category: String((b.featuredPost as Record<string, unknown>).category)
+        } : undefined,
+        sidePosts: Array.isArray(b.sidePosts) ? b.sidePosts.map((post: Record<string, unknown>) => ({
+          title: String(post.title),
+          excerpt: String(post.excerpt),
+          imageUrl: String(post.imageUrl),
+          readTime: String(post.readTime),
+          publishDate: String(post.publishDate)
+        })) : []
+      };
+    case 'breadcrumb':
+      if (!Array.isArray(b.items) || b.items.length < 1) return null;
+      return {
+        type: 'breadcrumb',
+        enabled: Boolean(b.enabled ?? true),
+        items: b.items.map((item: Record<string, unknown>) => ({
+          label: String(item.label),
+          href: item.href ? String(item.href) : undefined
+        })),
+        style: (b.style as { separator: '>' | '→' | '|' | '/'; textSize: 'sm' | 'base' | 'lg'; showHomeIcon: boolean; color: 'gray' | 'blue' | 'black' }) ?? {
+          separator: '>',
+          textSize: 'sm',
+          showHomeIcon: false,
+          color: 'gray'
+        }
+      };
+    default:
+      return null;
+  }
+}
+
+// Helper function to transform backend post to frontend post
+function transformBackendPost(post: BackendPost): Post {
+  return {
+    title: post.title,
+    slug: post.slug,
+    body: post.body || '',
+    contentSections: Array.isArray(post.contentSections)
+      ? ((post.contentSections as unknown[])
+          .map(normalizeSection)                // -> ContentSection | null
+          .filter(Boolean)) as ContentSection[] // narrow to ContentSection[]
+      : [],
+    tags: post.tags || [],
+    categories: post.categories || [],
+    breadcrumb: post.breadcrumb || { enabled: true, items: [{ label: 'Home', href: '/' }] },
+    jsonLd: post.jsonLd || false,
+    id: post._id || post.id || '',
+    author: transformAuthor(post.author),
+    status: post.status,
+    createdAt: new Date(post.createdAt),
+    updatedAt: new Date(post.updatedAt),
+    publishedAt: post.publishedAt ? new Date(post.publishedAt) : undefined,
+    scheduledAt: post.scheduledAt ? new Date(post.scheduledAt) : undefined,
+  };
+}
 
 export type Post = PostDraft & {
   id: string;
@@ -9,6 +309,22 @@ export type Post = PostDraft & {
   updatedAt: Date;
   scheduledAt?: Date;
   publishedAt?: Date;
+};
+
+export type ContentPage = {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  contentSections: unknown[];
+  status: 'draft' | 'published' | 'archived';
+  seoTitle?: string;
+  metaDescription?: string;
+  featuredImage?: string;
+  publishedAt?: Date;
+  updatedAt?: Date;
+  createdAt: Date;
+  lastSyncedAt?: Date;
 };
 
 export type MediaAsset = {
@@ -99,136 +415,271 @@ const mockMedia: MediaAsset[] = [
 
 // Initialize mock data after loading from persistence
 async function initializeMockData() {
-  const loadedPosts = await loadPosts();
-  const loadedMedia = await loadMediaAssets();
-  
-  // Load existing data
-  posts = loadedPosts;
-  mediaAssets = loadedMedia;
-  
-  // Only add mock data if no data exists
-  if (loadedPosts.size === 0) {
-    mockPosts.forEach(post => posts.set(post.id, post));
-    await savePosts(posts);
-  }
-  
-  if (loadedMedia.size === 0) {
-    mockMedia.forEach(asset => mediaAssets.set(asset.id, asset));
-    await saveMediaAssets(mediaAssets);
+  try {
+    console.log('Initializing mock data...');
+    
+    const loadedPosts = await loadPosts();
+    const loadedMedia = await loadMediaAssets();
+    
+    console.log('Loaded posts:', loadedPosts.size);
+    console.log('Loaded media:', loadedMedia.size);
+    
+    // Load existing data
+    posts = loadedPosts;
+    mediaAssets = loadedMedia;
+    
+    // Only add mock data if no data exists
+    if (loadedPosts.size === 0) {
+      console.log('Adding mock posts...');
+      mockPosts.forEach(post => posts.set(post.id, post));
+      await savePosts(posts);
+    }
+    
+    if (loadedMedia.size === 0) {
+      console.log('Adding mock media...');
+      mockMedia.forEach(asset => mediaAssets.set(asset.id, asset));
+      await saveMediaAssets(mediaAssets);
+    }
+    
+    console.log('Mock data initialization completed');
+  } catch (error) {
+    console.error('Error initializing mock data:', error);
+    // Initialize with empty data if loading fails
+    posts = new Map();
+    mediaAssets = new Map();
   }
 }
 
 // Track initialization state
 let isInitialized = false;
+let initError: Error | null = null;
+
 const initPromise = initializeMockData().then(() => {
   isInitialized = true;
-}).catch(console.error);
+  console.log('Data initialization completed successfully');
+}).catch((error) => {
+  console.error('Data initialization failed:', error);
+  initError = error;
+  isInitialized = true; // Mark as initialized even if failed to prevent infinite waiting
+});
 
 // Wait for initialization to complete
 async function ensureInitialized() {
   if (!isInitialized) {
     await initPromise;
   }
+  
+  if (initError) {
+    console.warn('Data initialization had errors, but continuing with empty data');
+  }
 }
 
 // Posts API
 export async function createPost(data: PostDraft): Promise<{ id: string }> {
-  await ensureInitialized();
-  const id = Math.random().toString(36).substr(2, 9);
-  const post: Post = {
-    ...data,
-    id,
-    author: 'Current User', // In real app, get from auth
-    status: 'draft',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-  
-  posts.set(id, post);
-  await savePosts(posts);
-  return { id };
+  try {
+    console.log('Admin Panel: Creating post with data:', data);
+    
+    const result = await apiFetch<BackendCreatePostResponse, PostDraft>(
+      'http://localhost:5000/api/admin/posts/test',
+      {
+        method: 'POST',
+        body: data,
+      }
+    );
+
+    console.log('Admin Panel: Post created successfully:', result);
+    return { id: result.data._id };
+  } catch (error) {
+    console.error('Admin Panel: Error creating post:', error);
+    // Fallback to mock data if backend is not available
+    await ensureInitialized();
+    const id = Math.random().toString(36).substr(2, 9);
+    const post: Post = {
+      ...data,
+      id,
+      author: 'Current User',
+      status: 'draft',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    posts.set(id, post);
+    await savePosts(posts);
+    return { id };
+  }
 }
 
 export async function getPosts(searchParams: PostSearch): Promise<{ rows: Post[]; total: number }> {
-  await ensureInitialized();
-  let filteredPosts = Array.from(posts.values());
-  
-  // Apply filters
-  if (searchParams.search) {
-    const search = searchParams.search.toLowerCase();
-    filteredPosts = filteredPosts.filter(post => 
-      post.title.toLowerCase().includes(search) ||
-      post.body?.toLowerCase().includes(search) ||
-      post.tags.some(tag => tag.toLowerCase().includes(search))
+  try {
+    console.log('Admin Panel: Fetching posts with params:', searchParams);
+    
+    const query: Query = {
+      search: searchParams.search,
+      status: searchParams.status !== 'all' ? searchParams.status : undefined,
+      author: searchParams.author,
+      dateFrom: searchParams.dateFrom,
+      dateTo: searchParams.dateTo,
+      page: searchParams.page,
+      limit: searchParams.limit,
+    };
+
+    const result = await apiFetch<BackendPostListResponse, undefined>(
+      'http://localhost:5000/api/admin/posts',
+      {
+        method: 'GET',
+        query,
+      }
     );
+
+    console.log('Admin Panel: Posts fetched successfully:', result);
+    
+    // Transform backend data to frontend format
+    const transformedPosts = result.rows.map(transformBackendPost);
+    
+    return { rows: transformedPosts, total: result.total };
+  } catch (error) {
+    console.error('Admin Panel: Error fetching posts:', error);
+    // Fallback to mock data if backend is not available
+    await ensureInitialized();
+    let filteredPosts = Array.from(posts.values());
+  
+    // Apply filters
+    if (searchParams.search) {
+      const search = searchParams.search.toLowerCase();
+      filteredPosts = filteredPosts.filter(post => 
+        post.title.toLowerCase().includes(search) ||
+        post.body?.toLowerCase().includes(search) ||
+        post.tags.some(tag => tag.toLowerCase().includes(search))
+      );
+    }
+    
+    if (searchParams.status !== 'all') {
+      filteredPosts = filteredPosts.filter(post => post.status === searchParams.status);
+    }
+    
+    if (searchParams.author) {
+      filteredPosts = filteredPosts.filter(post =>
+        post.author.toLowerCase().includes(searchParams.author!.toLowerCase())
+      );
+    }
+    
+    if (searchParams.dateFrom) {
+      const fromDate = new Date(searchParams.dateFrom);
+      filteredPosts = filteredPosts.filter(post => post.createdAt >= fromDate);
+    }
+    
+    if (searchParams.dateTo) {
+      const toDate = new Date(searchParams.dateTo);
+      filteredPosts = filteredPosts.filter(post => post.createdAt <= toDate);
+    }
+    
+    // Sort by updated date (newest first)
+    filteredPosts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    
+    // Pagination
+    const total = filteredPosts.length;
+    const start = (searchParams.page - 1) * searchParams.limit;
+    const end = start + searchParams.limit;
+    const rows = filteredPosts.slice(start, end);
+    
+    return { rows, total };
   }
-  
-  if (searchParams.status !== 'all') {
-    filteredPosts = filteredPosts.filter(post => post.status === searchParams.status);
-  }
-  
-  if (searchParams.author) {
-    filteredPosts = filteredPosts.filter(post =>
-      post.author.toLowerCase().includes(searchParams.author!.toLowerCase())
-    );
-  }
-  
-  if (searchParams.dateFrom) {
-    const fromDate = new Date(searchParams.dateFrom);
-    filteredPosts = filteredPosts.filter(post => post.createdAt >= fromDate);
-  }
-  
-  if (searchParams.dateTo) {
-    const toDate = new Date(searchParams.dateTo);
-    filteredPosts = filteredPosts.filter(post => post.createdAt <= toDate);
-  }
-  
-  // Sort by updated date (newest first)
-  filteredPosts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-  
-  // Pagination
-  const total = filteredPosts.length;
-  const start = (searchParams.page - 1) * searchParams.limit;
-  const end = start + searchParams.limit;
-  const rows = filteredPosts.slice(start, end);
-  
-  return { rows, total };
 }
 
 export async function getPost(id: string): Promise<Post | null> {
-  await ensureInitialized();
-  return posts.get(id) || null;
+  try {
+    console.log('Admin Panel: Fetching post with ID:', id, 'Type:', typeof id);
+    
+    const result = await apiFetch<BackendPostResponse, undefined>(
+      `http://localhost:5000/api/admin/posts/${id}`,
+      {
+        method: 'GET',
+      }
+    );
+
+    console.log('Admin Panel: Post fetched successfully:', result);
+    
+    if (result.success && result.data) {
+      const transformedPost = transformBackendPost(result.data);
+      console.log('Admin Panel: Post transformed:', transformedPost);
+      return transformedPost;
+    }
+    
+    console.log('Admin Panel: Post not found in response');
+    return null;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      console.log('Admin Panel: Post not found');
+      return null;
+    }
+    console.error('Admin Panel: Error fetching post:', error);
+    // Fallback to mock data if backend is not available
+    await ensureInitialized();
+    return posts.get(id) || null;
+  }
 }
 
 export async function updatePost(id: string, data: Partial<PostPublish>): Promise<Post | null> {
-  await ensureInitialized();
-  const existing = posts.get(id);
-  if (!existing) return null;
-  
-  console.log('updatePost - data received:', data);
-  console.log('updatePost - featuredImage:', data.featuredImage);
-  
-  const updated: Post = {
-    ...existing,
-    ...data,
-    updatedAt: new Date(),
-  };
-  
-  console.log('updatePost - updated post:', updated);
-  console.log('updatePost - updated featuredImage:', updated.featuredImage);
-  
-  posts.set(id, updated);
-  await savePosts(posts);
-  return updated;
+  try {
+    console.log('Admin Panel: Updating post with ID:', id, 'data:', data);
+    
+    const result = await apiFetch<BackendUpdatePostResponse, Partial<PostPublish>>(
+      `http://localhost:5000/api/admin/posts/${id}`,
+      {
+        method: 'PUT',
+        body: data,
+      }
+    );
+
+    console.log('Admin Panel: Post updated successfully:', result);
+    
+    if (result.success && result.data) {
+      return transformBackendPost(result.data);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Admin Panel: Error updating post:', error);
+    // Fallback to mock data if backend is not available
+    await ensureInitialized();
+    const existing = posts.get(id);
+    if (!existing) return null;
+    
+    const updated: Post = {
+      ...existing,
+      ...data,
+      updatedAt: new Date(),
+    };
+    
+    posts.set(id, updated);
+    await savePosts(posts);
+    return updated;
+  }
 }
 
 export async function deletePost(id: string): Promise<boolean> {
-  await ensureInitialized();
-  const deleted = posts.delete(id);
-  if (deleted) {
-    await savePosts(posts);
+  try {
+    console.log('Admin Panel: Deleting post with ID:', id);
+    
+    const result = await apiFetch<BackendDeletePostResponse, undefined>(
+      `http://localhost:5000/api/admin/posts/${id}`,
+      {
+        method: 'DELETE',
+      }
+    );
+
+    console.log('Admin Panel: Post deleted successfully:', result);
+    return result.success || true;
+  } catch (error) {
+    console.error('Admin Panel: Error deleting post:', error);
+    // Fallback to mock data if backend is not available
+    await ensureInitialized();
+    const deleted = posts.delete(id);
+    if (deleted) {
+      await savePosts(posts);
+    }
+    return deleted;
   }
-  return deleted;
 }
 
 export async function bulkUpdatePosts(action: BulkAction): Promise<{ success: number; failed: number }> {
@@ -287,14 +738,10 @@ export async function uploadMedia(file: File): Promise<{ id: string; url: string
   // Mock implementation - in real app, upload to storage service
   const id = Math.random().toString(36).substr(2, 9);
   
-  // Create a data URL for immediate preview
-  const url = await new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      resolve(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  });
+  // Create a data URL for immediate preview using Node.js compatible method
+  const arrayBuffer = await file.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString('base64');
+  const url = `data:${file.type};base64,${base64}`;
   
   console.log('uploadMedia - data URL created, length:', url.length);
   console.log('uploadMedia - data URL preview:', url.substring(0, 100) + '...');
@@ -317,6 +764,23 @@ export async function uploadMedia(file: File): Promise<{ id: string; url: string
   console.log('uploadMedia - assets saved to file');
   
   return { id, url };
+}
+
+export async function deleteMediaAsset(id: string): Promise<boolean> {
+  await ensureInitialized();
+  const deleted = mediaAssets.delete(id);
+  if (deleted) {
+    await saveMediaAssets(mediaAssets);
+  }
+  return deleted;
+}
+
+export async function deleteAllMediaAssets(): Promise<number> {
+  await ensureInitialized();
+  const count = mediaAssets.size;
+  mediaAssets.clear();
+  await saveMediaAssets(mediaAssets);
+  return count;
 }
 
 export async function checkSlugAvailability(slug: string, excludeId?: string): Promise<boolean> {

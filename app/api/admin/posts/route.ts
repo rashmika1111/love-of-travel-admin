@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
     const validatedParams = PostSearchSchema.parse(searchParams_);
     const result = await getPosts(validatedParams);
     
+    // Return the data in the format expected by the frontend
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching posts:', error);

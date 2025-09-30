@@ -97,7 +97,7 @@ export default async function PreviewPostPage({ params }: PreviewPostPageProps) 
             {post.featuredImage && (
               <div className="relative h-80 md:h-96 lg:h-[28rem]">
                 <img
-                  src={post.featuredImage}
+                  src={typeof post.featuredImage === 'string' ? post.featuredImage : post.featuredImage.url}
                   alt={post.title}
                   className="w-full h-full object-cover"
                 />
@@ -122,7 +122,7 @@ export default async function PreviewPostPage({ params }: PreviewPostPageProps) 
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <User className="h-4 w-4" />
-                  <span>By {post.author}</span>
+                  <span>By {typeof post.author === 'string' ? post.author : (post.author as { name?: string })?.name}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
@@ -196,7 +196,7 @@ export default async function PreviewPostPage({ params }: PreviewPostPageProps) 
                     <div className="flex flex-wrap gap-3">
                       {post.categories.map((category, index) => (
                         <Badge key={index} variant="outline" className="text-sm px-3 py-1">
-                          {category}
+                          {typeof category === 'string' ? category : (category as { name?: string })?.name}
                         </Badge>
                       ))}
                     </div>

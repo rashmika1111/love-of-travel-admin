@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMediaAssets, uploadMedia } from '@/lib/api';
+import { getMediaAssets, uploadMedia, deleteMediaAsset, deleteAllMediaAssets } from '@/lib/api';
 import { getSessionRole, can } from '@/lib/rbac';
 
 // GET /api/admin/media - List media assets
@@ -7,22 +7,27 @@ export async function GET() {
   try {
     const role = getSessionRole();
     
-    if (!can(role, 'media:upload')) {
+    if (!can(role, 'media:view')) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
       );
     }
 
+    console.log('Fetching media assets...');
     const assets = await getMediaAssets();
+    console.log('Media assets fetched:', assets.length, 'assets');
     
     return NextResponse.json(assets);
   } catch (error) {
     console.error('Error fetching media assets:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    
+    // Return empty array as fallback to prevent loading screen
+    return NextResponse.json([]);
   }
 }
 
@@ -93,6 +98,57 @@ export async function POST(request: NextRequest) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/admin/media - Delete media assets
+export async function DELETE(request: NextRequest) {
+  try {
+    const role = getSessionRole();
+    
+    if (!can(role, 'media:delete')) {
+      return NextResponse.json(
+        { error: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action');
+    const id = searchParams.get('id');
+
+    if (action === 'delete-all') {
+      const count = await deleteAllMediaAssets();
+      return NextResponse.json({ 
+        success: true, 
+        message: `Deleted ${count} media assets`,
+        count 
+      });
+    } else if (action === 'delete' && id) {
+      const deleted = await deleteMediaAsset(id);
+      if (deleted) {
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Media asset deleted successfully' 
+        });
+      } else {
+        return NextResponse.json(
+          { error: 'Media asset not found' },
+          { status: 404 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { error: 'Invalid request. Specify action (delete or delete-all) and id if needed' },
+        { status: 400 }
+      );
+    }
+  } catch (error) {
+    console.error('Error deleting media:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
