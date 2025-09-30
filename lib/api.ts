@@ -1,6 +1,147 @@
 import { PostDraft, PostPublish, PostSearch, BulkAction } from './validation';
 import { loadPosts, savePosts, loadMediaAssets, saveMediaAssets } from './persistence';
 
+// Typed API layer
+export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+
+export type Query = Record<string, string | number | boolean | undefined>;
+
+export type ApiHeaders = Record<string, string>;
+
+export class ApiError extends Error {
+  constructor(public status: number, public body: unknown) {
+    super(`API Error ${status}`);
+    this.name = 'ApiError';
+  }
+}
+
+function toQueryString(q?: Query) {
+  if (!q) return '';
+  const params = new URLSearchParams();
+  Object.entries(q).forEach(([k, v]) => {
+    if (v !== undefined && v !== null) params.append(k, String(v));
+  });
+  const s = params.toString();
+  return s ? `?${s}` : '';
+}
+
+/**
+ * Generic JSON fetcher without `any`
+ * - TResponse: the JSON shape you expect back
+ * - TBody: the JSON you send (if any)
+ */
+export async function apiFetch<TResponse, TBody = undefined>(
+  path: string,
+  opts: {
+    method?: HttpMethod;
+    query?: Query;
+    body?: TBody;
+    headers?: ApiHeaders;
+  } = {}
+): Promise<TResponse> {
+  const { method = 'GET', query, body, headers } = opts;
+
+  const url = `${path}${toQueryString(query)}`;
+  const res = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(headers ?? {}),
+    },
+    body: (body === undefined ? undefined : JSON.stringify(body)),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new ApiError(res.status, text || 'Request failed');
+  }
+
+  // If endpoint returns no content
+  if (res.status === 204) return undefined as unknown as TResponse;
+
+  return (await res.json()) as TResponse;
+}
+
+// Author type for backend responses
+type AuthorResponse = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+};
+
+// Backend response types
+type BackendPost = {
+  _id: string;
+  id?: string;
+  title: string;
+  slug: string;
+  body?: string;
+  contentSections: unknown[];
+  breadcrumb?: {
+    enabled: boolean;
+    items: Array<{ label: string; href: string }>;
+  };
+  tags: string[];
+  categories: string[];
+  status: 'draft' | 'review' | 'scheduled' | 'published';
+  author: string | AuthorResponse;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  scheduledAt?: string;
+  jsonLd?: boolean;
+};
+
+type BackendPostListResponse = {
+  rows: BackendPost[];
+  total: number;
+};
+
+type BackendPostResponse = {
+  success: boolean;
+  data: BackendPost;
+};
+
+type BackendCreatePostResponse = {
+  success: boolean;
+  data: BackendPost;
+};
+
+type BackendUpdatePostResponse = {
+  success: boolean;
+  data: BackendPost;
+};
+
+type BackendDeletePostResponse = {
+  success: boolean;
+};
+
+// Helper function to transform author data
+function transformAuthor(author: string | AuthorResponse): string {
+  if (typeof author === 'string') {
+    return author;
+  }
+  
+  const firstName = author.firstName || '';
+  const lastName = author.lastName || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+  
+  return fullName || author.email || 'Unknown';
+}
+
+// Helper function to transform backend post to frontend post
+function transformBackendPost(post: BackendPost): Post {
+  return {
+    ...post,
+    id: post._id || post.id || '',
+    author: transformAuthor(post.author),
+    createdAt: new Date(post.createdAt),
+    updatedAt: new Date(post.updatedAt),
+    publishedAt: post.publishedAt ? new Date(post.publishedAt) : undefined,
+    scheduledAt: post.scheduledAt ? new Date(post.scheduledAt) : undefined,
+  };
+}
+
 export type Post = PostDraft & {
   id: string;
   author: string;
@@ -179,21 +320,14 @@ export async function createPost(data: PostDraft): Promise<{ id: string }> {
   try {
     console.log('Admin Panel: Creating post with data:', data);
     
-    const response = await fetch('http://localhost:5000/api/admin/posts/test', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
+    const result = await apiFetch<BackendCreatePostResponse, PostDraft>(
+      'http://localhost:5000/api/admin/posts/test',
+      {
+        method: 'POST',
+        body: data,
+      }
+    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Admin Panel: Error creating post:', errorData);
-      throw new Error(errorData.message || 'Failed to create post');
-    }
-
-    const result = await response.json();
     console.log('Admin Panel: Post created successfully:', result);
     return { id: result.data._id };
   } catch (error) {
@@ -220,41 +354,28 @@ export async function getPosts(searchParams: PostSearch): Promise<{ rows: Post[]
   try {
     console.log('Admin Panel: Fetching posts with params:', searchParams);
     
-    const queryParams = new URLSearchParams();
-    if (searchParams.search) queryParams.append('search', searchParams.search);
-    if (searchParams.status && searchParams.status !== 'all') queryParams.append('status', searchParams.status);
-    if (searchParams.author) queryParams.append('author', searchParams.author);
-    if (searchParams.dateFrom) queryParams.append('dateFrom', searchParams.dateFrom);
-    if (searchParams.dateTo) queryParams.append('dateTo', searchParams.dateTo);
-    queryParams.append('page', searchParams.page.toString());
-    queryParams.append('limit', searchParams.limit.toString());
+    const query: Query = {
+      search: searchParams.search,
+      status: searchParams.status !== 'all' ? searchParams.status : undefined,
+      author: searchParams.author,
+      dateFrom: searchParams.dateFrom,
+      dateTo: searchParams.dateTo,
+      page: searchParams.page,
+      limit: searchParams.limit,
+    };
 
-    const response = await fetch(`http://localhost:5000/api/admin/posts?${queryParams}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
+    const result = await apiFetch<BackendPostListResponse, undefined>(
+      'http://localhost:5000/api/admin/posts',
+      {
+        method: 'GET',
+        query,
       }
-    });
+    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Admin Panel: Error fetching posts:', errorData);
-      throw new Error(errorData.message || 'Failed to fetch posts');
-    }
-
-    const result = await response.json();
     console.log('Admin Panel: Posts fetched successfully:', result);
     
     // Transform backend data to frontend format
-    const transformedPosts = result.rows.map((post: Record<string, unknown>) => ({
-      ...post,
-      id: post._id || post.id, // Ensure we have an 'id' field
-      author: post.author ? (typeof post.author === 'string' ? post.author : `${(post.author as any).firstName || ''} ${(post.author as any).lastName || ''}`.trim() || (post.author as any).email || 'Unknown') : 'Unknown',
-      createdAt: new Date(post.createdAt),
-      updatedAt: new Date(post.updatedAt),
-      publishedAt: post.publishedAt ? new Date(post.publishedAt) : undefined,
-      scheduledAt: post.scheduledAt ? new Date(post.scheduledAt) : undefined,
-    }));
+    const transformedPosts = result.rows.map(transformBackendPost);
     
     return { rows: transformedPosts, total: result.total };
   } catch (error) {
@@ -310,39 +431,17 @@ export async function getPost(id: string): Promise<Post | null> {
   try {
     console.log('Admin Panel: Fetching post with ID:', id, 'Type:', typeof id);
     
-    // Use the direct GET single post endpoint
-    const response = await fetch(`http://localhost:5000/api/admin/posts/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
+    const result = await apiFetch<BackendPostResponse, undefined>(
+      `http://localhost:5000/api/admin/posts/${id}`,
+      {
+        method: 'GET',
       }
-    });
+    );
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.log('Admin Panel: Post not found');
-        return null;
-      }
-      const errorData = await response.json();
-      console.error('Admin Panel: Error fetching post:', errorData);
-      throw new Error(errorData.message || 'Failed to fetch post');
-    }
-
-    const result = await response.json();
     console.log('Admin Panel: Post fetched successfully:', result);
     
     if (result.success && result.data) {
-      // Transform backend data to frontend format
-      const post = result.data;
-      const transformedPost = {
-        ...post,
-        id: post._id || post.id,
-        author: post.author ? (typeof post.author === 'string' ? post.author : `${(post.author as any).firstName || ''} ${(post.author as any).lastName || ''}`.trim() || (post.author as any).email || 'Unknown') : 'Unknown',
-        createdAt: new Date(post.createdAt),
-        updatedAt: new Date(post.updatedAt),
-        publishedAt: post.publishedAt ? new Date(post.publishedAt) : undefined,
-        scheduledAt: post.scheduledAt ? new Date(post.scheduledAt) : undefined,
-      };
+      const transformedPost = transformBackendPost(result.data);
       console.log('Admin Panel: Post transformed:', transformedPost);
       return transformedPost;
     }
@@ -350,6 +449,10 @@ export async function getPost(id: string): Promise<Post | null> {
     console.log('Admin Panel: Post not found in response');
     return null;
   } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      console.log('Admin Panel: Post not found');
+      return null;
+    }
     console.error('Admin Panel: Error fetching post:', error);
     // Fallback to mock data if backend is not available
     await ensureInitialized();
@@ -361,34 +464,18 @@ export async function updatePost(id: string, data: Partial<PostPublish>): Promis
   try {
     console.log('Admin Panel: Updating post with ID:', id, 'data:', data);
     
-    const response = await fetch(`http://localhost:5000/api/admin/posts/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
+    const result = await apiFetch<BackendUpdatePostResponse, Partial<PostPublish>>(
+      `http://localhost:5000/api/admin/posts/${id}`,
+      {
+        method: 'PUT',
+        body: data,
+      }
+    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Admin Panel: Error updating post:', errorData);
-      throw new Error(errorData.message || 'Failed to update post');
-    }
-
-    const result = await response.json();
     console.log('Admin Panel: Post updated successfully:', result);
     
     if (result.success && result.data) {
-      // Transform backend data to frontend format
-      const post = {
-        ...result.data,
-        id: result.data._id || result.data.id,
-        createdAt: new Date(result.data.createdAt),
-        updatedAt: new Date(result.data.updatedAt),
-        publishedAt: result.data.publishedAt ? new Date(result.data.publishedAt) : undefined,
-        scheduledAt: result.data.scheduledAt ? new Date(result.data.scheduledAt) : undefined,
-      };
-      return post;
+      return transformBackendPost(result.data);
     }
     
     return null;
@@ -415,20 +502,13 @@ export async function deletePost(id: string): Promise<boolean> {
   try {
     console.log('Admin Panel: Deleting post with ID:', id);
     
-    const response = await fetch(`http://localhost:5000/api/admin/posts/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json'
+    const result = await apiFetch<BackendDeletePostResponse, undefined>(
+      `http://localhost:5000/api/admin/posts/${id}`,
+      {
+        method: 'DELETE',
       }
-    });
+    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Admin Panel: Error deleting post:', errorData);
-      throw new Error(errorData.message || 'Failed to delete post');
-    }
-
-    const result = await response.json();
     console.log('Admin Panel: Post deleted successfully:', result);
     return result.success || true;
   } catch (error) {
