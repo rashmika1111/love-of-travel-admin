@@ -132,9 +132,17 @@ function transformAuthor(author: string | AuthorResponse): string {
 // Helper function to transform backend post to frontend post
 function transformBackendPost(post: BackendPost): Post {
   return {
-    ...post,
+    title: post.title,
+    slug: post.slug,
+    body: post.body || '',
+    contentSections: Array.isArray(post.contentSections) ? post.contentSections : [],
+    tags: post.tags || [],
+    categories: post.categories || [],
+    breadcrumb: post.breadcrumb || { enabled: true, items: [{ label: 'Home', href: '/' }] },
+    jsonLd: post.jsonLd || false,
     id: post._id || post.id || '',
     author: transformAuthor(post.author),
+    status: post.status,
     createdAt: new Date(post.createdAt),
     updatedAt: new Date(post.updatedAt),
     publishedAt: post.publishedAt ? new Date(post.publishedAt) : undefined,
