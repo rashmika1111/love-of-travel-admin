@@ -1,4 +1,4 @@
-import { PostDraft, PostPublish, PostSearch, BulkAction } from './validation';
+import { PostDraft, PostPublish, PostSearch, BulkAction, ContentSection } from './validation';
 import { loadPosts, savePosts, loadMediaAssets, saveMediaAssets } from './persistence';
 
 // Typed API layer
@@ -129,13 +129,164 @@ function transformAuthor(author: string | AuthorResponse): string {
   return fullName || author.email || 'Unknown';
 }
 
+// Helper function to normalize content sections from backend
+function normalizeSection(raw: unknown): ContentSection | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const b = raw as Record<string, unknown>;
+
+  switch (b.type) {
+    case 'hero':
+      if (!b.backgroundImage || !b.title) return null;
+      return {
+        type: 'hero',
+        backgroundImage: String(b.backgroundImage),
+        title: String(b.title),
+        subtitle: b.subtitle ? String(b.subtitle) : undefined,
+        author: b.author ? String(b.author) : undefined,
+        publishDate: b.publishDate ? String(b.publishDate) : undefined,
+        readTime: b.readTime ? String(b.readTime) : undefined,
+        overlayOpacity: Number(b.overlayOpacity ?? 0.4),
+        height: (b.height as { mobile: string; tablet: string; desktop: string }) ?? { mobile: '320px', tablet: '420px', desktop: '520px' },
+        titleSize: (b.titleSize as { mobile: string; tablet: string; desktop: string }) ?? { mobile: '28px', tablet: '36px', desktop: '48px' },
+        parallaxEnabled: Boolean(b.parallaxEnabled ?? false),
+        parallaxSpeed: Number(b.parallaxSpeed ?? 1),
+        backgroundPosition: (b.backgroundPosition as 'center' | 'top' | 'bottom' | 'left' | 'right') ?? 'center',
+        backgroundSize: (b.backgroundSize as 'cover' | 'contain') ?? 'cover',
+        animation: (b.animation as { enabled: boolean; type: 'fadeIn' | 'slideUp' | 'scaleIn' | 'none'; duration: number; delay: number }) ?? {
+          enabled: false,
+          type: 'fadeIn',
+          duration: 0.5,
+          delay: 0
+        },
+        socialSharing: (b.socialSharing as { enabled: boolean; platforms: ('facebook' | 'twitter' | 'linkedin' | 'copy' | 'share')[]; position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'; style: 'glass' | 'solid' | 'outline' }) ?? {
+          enabled: false,
+          platforms: ['facebook', 'twitter', 'linkedin'],
+          position: 'bottom-right',
+          style: 'glass'
+        }
+      };
+    case 'text':
+      if (!b.content) return null;
+      return {
+        type: 'text',
+        content: String(b.content),
+        hasDropCap: Boolean(b.hasDropCap ?? false),
+        alignment: (b.alignment as 'left' | 'center' | 'right' | 'justify') ?? 'left',
+        fontSize: (b.fontSize as 'sm' | 'base' | 'lg' | 'xl') ?? 'base',
+        fontFamily: (b.fontFamily as 'inter' | 'serif' | 'sans' | 'mono') ?? 'inter',
+        lineHeight: (b.lineHeight as 'tight' | 'snug' | 'normal' | 'relaxed' | 'loose') ?? 'normal',
+        dropCap: (b.dropCap as { enabled: boolean; size: 'text-4xl' | 'text-5xl' | 'text-6xl'; color: string; fontWeight: 'normal' | 'medium' | 'semibold' | 'bold'; float: boolean }) ?? {
+          enabled: false,
+          size: 'text-4xl',
+          color: '#000000',
+          fontWeight: 'normal',
+          float: false
+        },
+        animation: (b.animation as { enabled: boolean; type: 'fadeIn' | 'slideUp' | 'slideInLeft' | 'slideInRight' | 'none'; duration: number; delay: number }) ?? {
+          enabled: false,
+          type: 'fadeIn',
+          duration: 0.5,
+          delay: 0
+        }
+      };
+    case 'image':
+      if (!b.imageUrl) return null;
+      return {
+        type: 'image',
+        imageUrl: String(b.imageUrl),
+        altText: b.altText ? String(b.altText) : undefined,
+        caption: b.caption ? String(b.caption) : undefined,
+        width: b.width ? Number(b.width) : undefined,
+        height: b.height ? Number(b.height) : undefined,
+        alignment: (b.alignment as 'left' | 'center' | 'right') ?? 'center',
+        rounded: Boolean(b.rounded ?? false),
+        shadow: Boolean(b.shadow ?? false)
+      };
+    case 'gallery':
+      if (!Array.isArray(b.images) || b.images.length < 1) return null;
+      return {
+        type: 'gallery',
+        images: b.images.map((im: Record<string, unknown>) => ({
+          url: String(im.url),
+          altText: im.altText ? String(im.altText) : undefined,
+          caption: im.caption ? String(im.caption) : undefined,
+          width: im.width ? Number(im.width) : undefined,
+          height: im.height ? Number(im.height) : undefined
+        })),
+        layout: (b.layout as 'grid' | 'masonry' | 'carousel' | 'postcard' | 'complex') ?? 'grid',
+        columns: Number(b.columns ?? 3),
+        spacing: (b.spacing as 'sm' | 'md' | 'lg') ?? 'md',
+        responsive: (b.responsive as { mobile: { layout: 'grid' | 'carousel'; columns: number }; desktop: { layout: 'grid' | 'masonry' | 'postcard' | 'complex'; columns: number } }) ?? {
+          mobile: { layout: 'grid', columns: 2 },
+          desktop: { layout: 'grid', columns: 3 }
+        },
+        hoverEffects: (b.hoverEffects as { enabled: boolean; scale: number; shadow: boolean; overlay: boolean }) ?? {
+          enabled: false,
+          scale: 1.05,
+          shadow: false,
+          overlay: false
+        },
+        animation: (b.animation as { enabled: boolean; type: 'fadeIn' | 'slideUp' | 'stagger' | 'none'; duration: number; stagger: number }) ?? {
+          enabled: false,
+          type: 'fadeIn',
+          duration: 0.5,
+          stagger: 0.1
+        }
+      };
+    case 'popular-posts':
+      if (!b.title) return null;
+      return {
+        type: 'popular-posts',
+        title: String(b.title),
+        description: b.description ? String(b.description) : undefined,
+        featuredPost: b.featuredPost ? {
+          title: String((b.featuredPost as Record<string, unknown>).title),
+          excerpt: String((b.featuredPost as Record<string, unknown>).excerpt),
+          imageUrl: String((b.featuredPost as Record<string, unknown>).imageUrl),
+          readTime: String((b.featuredPost as Record<string, unknown>).readTime),
+          publishDate: String((b.featuredPost as Record<string, unknown>).publishDate),
+          category: String((b.featuredPost as Record<string, unknown>).category)
+        } : undefined,
+        sidePosts: Array.isArray(b.sidePosts) ? b.sidePosts.map((post: Record<string, unknown>) => ({
+          title: String(post.title),
+          excerpt: String(post.excerpt),
+          imageUrl: String(post.imageUrl),
+          readTime: String(post.readTime),
+          publishDate: String(post.publishDate)
+        })) : []
+      };
+    case 'breadcrumb':
+      if (!Array.isArray(b.items) || b.items.length < 1) return null;
+      return {
+        type: 'breadcrumb',
+        enabled: Boolean(b.enabled ?? true),
+        items: b.items.map((item: Record<string, unknown>) => ({
+          label: String(item.label),
+          href: item.href ? String(item.href) : undefined
+        })),
+        style: (b.style as { separator: '>' | '→' | '|' | '/'; textSize: 'sm' | 'base' | 'lg'; showHomeIcon: boolean; color: 'gray' | 'blue' | 'black' }) ?? {
+          separator: '>',
+          textSize: 'sm',
+          showHomeIcon: false,
+          color: 'gray'
+        }
+      };
+    default:
+      return null;
+  }
+}
+
 // Helper function to transform backend post to frontend post
 function transformBackendPost(post: BackendPost): Post {
   return {
     title: post.title,
     slug: post.slug,
     body: post.body || '',
-    contentSections: Array.isArray(post.contentSections) ? post.contentSections : [],
+    contentSections: Array.isArray(post.contentSections)
+      ? ((post.contentSections as unknown[])
+          .map(normalizeSection)                // -> ContentSection | null
+          .filter(Boolean)) as ContentSection[] // narrow to ContentSection[]
+      : [],
     tags: post.tags || [],
     categories: post.categories || [],
     breadcrumb: post.breadcrumb || { enabled: true, items: [{ label: 'Home', href: '/' }] },
